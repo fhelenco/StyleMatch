@@ -10,7 +10,7 @@ import {
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -37,15 +37,17 @@ export function Button({
   };
 
   const variants: Record<string, ViewStyle> = {
-    primary: { backgroundColor: '#C9A99A' },
-    secondary: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#C9A99A' },
+    primary: { backgroundColor: '#1A1A1A' },
+    secondary: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#E8E2DE' },
     ghost: { backgroundColor: 'transparent' },
+    danger: { backgroundColor: 'transparent' },
   };
 
   const textVariants: Record<string, TextStyle> = {
     primary: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
-    secondary: { color: '#C9A99A', fontSize: 15, fontWeight: '600' },
+    secondary: { color: '#1A1A1A', fontSize: 15, fontWeight: '600' },
     ghost: { color: '#1A1A1A', fontSize: 15, fontWeight: '400' },
+    danger: { color: '#E05C5C', fontSize: 15, fontWeight: '600' },
   };
 
   return (
@@ -55,7 +57,7 @@ export function Button({
       activeOpacity={0.75}
       style={[base, variants[variant], disabled && { opacity: 0.5 }, style]}
     >
-      {loading && <ActivityIndicator size="small" color={variant === 'primary' ? '#fff' : '#C9A99A'} />}
+      {loading && <ActivityIndicator size="small" color={variant === 'primary' ? '#fff' : '#1A1A1A'} />}
       <Text style={[textVariants[variant], textStyle]}>{title}</Text>
     </TouchableOpacity>
   );

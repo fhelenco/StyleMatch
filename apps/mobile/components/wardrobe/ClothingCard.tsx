@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ColorSwatch } from '../ui/ColorSwatch';
 import { ClothingItem } from '../../stores/wardrobeStore';
@@ -12,6 +12,9 @@ interface ClothingCardProps {
 
 export function ClothingCard({ item, onPress, width }: ClothingCardProps) {
   const height = width * (4 / 3);
+  const categoryLabel = item.category
+    ? item.category.charAt(0).toUpperCase() + item.category.slice(1)
+    : item.garment_type;
 
   return (
     <TouchableOpacity
@@ -24,17 +27,21 @@ export function ClothingCard({ item, onPress, width }: ClothingCardProps) {
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
       />
+
+      {/* Category tag top-right */}
+      <View style={styles.categoryTag}>
+        <Text style={styles.categoryText}>{categoryLabel}</Text>
+      </View>
+
+      {/* Bottom gradient overlay */}
       <LinearGradient
-        colors={['transparent', 'rgba(26,26,26,0.85)']}
+        colors={['transparent', 'rgba(26,26,26,0.8)']}
         style={styles.gradient}
       >
         <Text style={styles.label} numberOfLines={1}>
           {item.label}
         </Text>
-        <View style={styles.bottom}>
-          <ColorSwatch colors={item.colors} size={12} />
-          <Text style={styles.type}>{item.garment_type}</Text>
-        </View>
+        <ColorSwatch colors={item.colors} size={12} />
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -45,11 +52,27 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#F5F0ED',
-    shadowColor: '#1A1A1A',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
+  },
+  categoryTag: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   gradient: {
     position: 'absolute',
@@ -59,21 +82,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingTop: 32,
     paddingBottom: 10,
-    gap: 4,
+    gap: 6,
   },
   label: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-  },
-  bottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  type: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 10,
-    textTransform: 'capitalize',
   },
 });

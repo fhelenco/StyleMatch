@@ -4,6 +4,15 @@ import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
 const CATEGORIES = ['all', 'tops', 'bottoms', 'shoes', 'accessories', 'outerwear'] as const;
 type Category = (typeof CATEGORIES)[number];
 
+const LABELS: Record<Category, string> = {
+  all: 'All',
+  tops: 'Tops',
+  bottoms: 'Bottoms',
+  shoes: 'Shoes',
+  accessories: 'Accessories',
+  outerwear: 'Outerwear',
+};
+
 interface CategoryFilterProps {
   selected: Category;
   onSelect: (cat: Category) => void;
@@ -26,7 +35,7 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
             activeOpacity={0.75}
           >
             <Text style={[styles.label, active && styles.labelActive]}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {LABELS[cat]}
             </Text>
           </TouchableOpacity>
         );
@@ -45,7 +54,7 @@ const styles = StyleSheet.create({
     borderColor: '#E8E2DE',
     backgroundColor: '#FFFFFF',
   },
-  chipActive: { backgroundColor: '#C9A99A', borderColor: '#C9A99A' },
+  chipActive: { backgroundColor: '#1A1A1A', borderColor: '#1A1A1A' },
   label: { fontSize: 13, color: '#8C8C8C', fontWeight: '500' },
   labelActive: { color: '#FFFFFF', fontWeight: '600' },
 });
