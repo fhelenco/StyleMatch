@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "StyleMatch",
+    "slug": "stylematch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "stylematch",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stylematch.app"
+    },
+    "android": {
+      "package": "com.stylematch.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FAFAFA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-camera",
+        { "cameraPermission": "StyleMatch needs camera access to photograph your clothing items." }
+      ],
+      [
+        "expo-image-picker",
+        { "photosPermission": "StyleMatch needs photo library access to import your clothing items." }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

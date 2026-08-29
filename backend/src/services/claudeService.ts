@@ -1,0 +1,51 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { GARMENT_ANALYSIS_PROMPT, buildOutfitSuggestionsPrompt } from '../prompts';
+import { GarmentAnalysis, OutfitSuggestion } from '../types';
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+export async function analyzeGarment(
+  base64Image: string,
+  mediaType: string
+): Promise<GarmentAnalysis> {
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp',
+              data: base64Image,
+            },
+          },
+          { type: 'text', text: GARMENT_ANALYSIS_PROMPT },
+        ],
+      },
+    ],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean) as GarmentAnalysis;
+}
+
+export async function generateOutfitSuggestions(
+  anchorItem: object,
+  wardrobe: object[]
+): Promise<OutfitSuggestion[]> {
+  const prompt = buildOutfitSuggestionsPrompt(anchorItem, wardrobe);
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean) as OutfitSuggestion[];
+}
