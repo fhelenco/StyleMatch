@@ -17,35 +17,6 @@ export async function resizeImage(buffer: Buffer): Promise<Buffer> {
 }
 
 /**
- * Hardens the alpha mask of a cut-out. The segmentation model leaves a halo of
- * low-opacity pixels around low-contrast edges — most visibly on a white or
- * pale garment shot against a light background, where that halo would flatten
- * to a dirty grey fringe on the off-white card. Snap alpha so an edge is either
- * kept or dropped, then re-soften it by ~1px so it doesn't look cut with
- * scissors.
- */
-async function hardenAlpha(cutoutPng: Buffer): Promise<Buffer> {
-  const img = sharp(cutoutPng).ensureAlpha();
-  const { width, height } = await img.metadata();
-  if (!width || !height) return cutoutPng;
-
-  const rgb = await sharp(cutoutPng).removeAlpha().toColourspace('srgb').raw().toBuffer();
-  const alpha = await sharp(cutoutPng)
-    .ensureAlpha()
-    .extractChannel(3)
-    .threshold(110) // drop anything below ~43% opacity (the halo)
-    .blur(0.7)
-    .raw()
-    .toBuffer();
-
-  const merged = await sharp(rgb, { raw: { width, height, channels: 3 } })
-    .joinChannel(alpha, { raw: { width, height, channels: 1 } })
-    .png()
-    .toBuffer();
-  return Buffer.from(merged);
-}
-
-/**
  * Frames an arbitrary garment photo into a uniform 3:4 card: trims the empty
  * border, scales the garment to sit within ~92% of the card, and centres it on
  * an off-white backdrop. The output is always CARD_W x CARD_H regardless of how
@@ -97,15 +68,12 @@ export async function removeImageBackground(buffer: Buffer): Promise<Buffer> {
   const blob = await removeBackground(inputBlob, {
     output: { format: 'image/png', quality: 0.9 },
   });
-  const rawCutout = Buffer.from(await blob.arrayBuffer());
+  const cutout = Buffer.from(await blob.arrayBuffer());
 
-  let cutout: Buffer = rawCutout;
-  try {
-    cutout = await hardenAlpha(rawCutout);
-  } catch (err) {
-    console.warn('alpha cleanup failed, using raw cut-out:', err);
-  }
-
+  // The soft alpha the model produces is left as-is: any post-processing
+  // (thresholding, morphology) risks punching holes through low-contrast or
+  // distressed areas of the garment. Composited over the off-white card the
+  // model's own feathered edge reads clean.
   return frameToCard(cutout, { trimTransparent: true });
 }
 
