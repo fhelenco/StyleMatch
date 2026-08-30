@@ -70,6 +70,10 @@ export async function removeImageBackground(buffer: Buffer): Promise<Buffer> {
   });
   const cutout = Buffer.from(await blob.arrayBuffer());
 
+  // The soft alpha the model produces is left as-is: any post-processing
+  // (thresholding, morphology) risks punching holes through low-contrast or
+  // distressed areas of the garment. Composited over the off-white card the
+  // model's own feathered edge reads clean.
   return frameToCard(cutout, { trimTransparent: true });
 }
 

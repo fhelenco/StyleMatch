@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,9 +39,12 @@ export default function ItemDetailScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Set when "Replace photo" is tapped; the picker is launched only after the
+  // action sheet has fully closed (ActionSheet.onDismissed) — presenting it
+  // while that modal is still up is a silent no-op on iOS.
+  const [pendingReplace, setPendingReplace] = useState(false);
 
-  const handleReplacePhoto = async () => {
-    setMenuVisible(false);
+  const runReplacePhoto = async () => {
     if (!item) return;
     const uri = await pickFromGallery();
     if (!uri) return;
@@ -54,11 +60,47 @@ export default function ItemDetailScreen() {
         id: item.id,
         updates: { image_url: result.image_url, image_path: result.image_path },
       });
-    } catch {
-      // best-effort; the item keeps its previous photo on failure
+    } catch (err) {
+      Alert.alert(
+        'Could not replace photo',
+        err instanceof Error ? err.message : 'Something went wrong. Try again.',
+      );
     } finally {
       setBusy(false);
     }
+  };
+
+  // Non-iOS: launch the picker only once the custom action sheet has fully
+  // closed (ActionSheet.onDismissed is the primary trigger; this is a fallback).
+  useEffect(() => {
+    if (menuVisible || !pendingReplace) return;
+    const id = setTimeout(() => {
+      setPendingReplace(false);
+      runReplacePhoto();
+    }, 450);
+    return () => clearTimeout(id);
+  }, [menuVisible, pendingReplace]);
+
+  const openManageMenu = () => {
+    // iOS: use the native action sheet. Its callback fires only after the sheet
+    // is fully gone, so launching the image picker from it works reliably —
+    // unlike dismissing our own <Modal> and racing the picker presentation.
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Manage piece',
+          options: ['Replace photo', 'Delete item', 'Cancel'],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 2,
+        },
+        (index) => {
+          if (index === 0) runReplacePhoto();
+          else if (index === 1) setConfirmVisible(true);
+        },
+      );
+      return;
+    }
+    setMenuVisible(true);
   };
 
   const handleDelete = () => {
@@ -108,7 +150,7 @@ export default function ItemDetailScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.circleBtn, styles.circleRight]}
-            onPress={() => setMenuVisible(true)}
+            onPress={openManageMenu}
             hitSlop={8}
           >
             <Ionicons name="ellipsis-horizontal" size={18} color={colors.foreground} />
@@ -188,8 +230,21 @@ export default function ItemDetailScreen() {
         visible={menuVisible}
         title="Manage piece"
         onClose={() => setMenuVisible(false)}
+        onDismissed={() => {
+          if (pendingReplace) {
+            setPendingReplace(false);
+            runReplacePhoto();
+          }
+        }}
         options={[
-          { label: 'Replace photo', icon: 'camera-outline', onPress: handleReplacePhoto },
+          {
+            label: 'Replace photo',
+            icon: 'camera-outline',
+            onPress: () => {
+              setPendingReplace(true);
+              setMenuVisible(false);
+            },
+          },
           {
             label: 'Delete item',
             icon: 'trash-outline',

@@ -257,7 +257,7 @@ export default function HomeScreen() {
             >
               <TouchableOpacity
                 style={styles.styleItBtn}
-                onPress={() => router.push('/match')}
+                onPress={() => router.push('/matching')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.styleItText}>STYLE IT</Text>
@@ -407,14 +407,14 @@ export default function HomeScreen() {
             <View style={styles.aiButtons}>
               <TouchableOpacity
                 style={styles.uploadBtn}
-                onPress={() => router.push('/add-item')}
+                onPress={() => router.push('/add-item/capture')}
                 activeOpacity={0.8}
               >
                 <Text style={styles.uploadBtnText}>UPLOAD PIECE</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.generateBtn}
-                onPress={() => router.push('/match')}
+                onPress={() => router.push('/matching')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.generateBtnText}>GENERATE MATCH</Text>

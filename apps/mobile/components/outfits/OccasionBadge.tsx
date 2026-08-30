@@ -16,6 +16,9 @@ export function OccasionBadge({ occasion, season }: OccasionBadgeProps) {
     weekend: colors.warning,
     formal: colors.foreground,
     gym: '#4C9ACF',
+    party: colors.danger,
+    beach: '#5FB8A8',
+    bar: colors.accentDark,
   };
   const color = palette[occasion] || colors.muted;
   return (

@@ -38,6 +38,16 @@ export function useSuggestOutfits(anchorItemId: string | null) {
   });
 }
 
+export function useSuggestOutfitsByOccasion() {
+  return useMutation<OutfitSuggestion[], Error, { occasion: string; season?: string }>({
+    mutationFn: (body) =>
+      apiRequest<OutfitSuggestion[]>('/api/outfits/suggest-by-occasion', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
 export function useSavedOutfits() {
   return useQuery<SavedOutfit[]>({
     queryKey: ['outfits'],

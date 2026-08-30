@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { GARMENT_ANALYSIS_PROMPT, buildOutfitSuggestionsPrompt } from '../prompts';
+import { GARMENT_ANALYSIS_PROMPT, buildOutfitSuggestionsPrompt, buildOccasionOutfitPrompt } from '../prompts';
 import { GarmentAnalysis, OutfitSuggestion } from '../types';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -39,6 +39,23 @@ export async function generateOutfitSuggestions(
   wardrobe: object[]
 ): Promise<OutfitSuggestion[]> {
   const prompt = buildOutfitSuggestionsPrompt(anchorItem, wardrobe);
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean) as OutfitSuggestion[];
+}
+
+export async function generateOutfitsForOccasion(
+  occasion: string,
+  season: string | undefined,
+  wardrobe: object[]
+): Promise<OutfitSuggestion[]> {
+  const prompt = buildOccasionOutfitPrompt(occasion, season, wardrobe);
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,

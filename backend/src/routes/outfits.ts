@@ -2,18 +2,31 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { adminSupabase } from '../services/supabaseService';
-import { generateOutfitSuggestions } from '../services/claudeService';
+import { generateOutfitSuggestions, generateOutfitsForOccasion } from '../services/claudeService';
 
 const router = Router();
 
+// Kept in one place so the "save" and "generate by occasion" validators can't
+// drift apart. Also mirrored in the prompt text in
+// backend/src/prompts/outfitSuggestions.ts — update both if this ever changes.
+const OCCASIONS = [
+  'casual', 'work', 'date-night', 'weekend', 'formal', 'gym', 'party', 'beach', 'bar',
+] as const;
+const SEASONS = ['spring-summer', 'fall-winter', 'all-season'] as const;
+
 const SaveOutfitSchema = z.object({
   name: z.string().optional(),
-  occasion: z.enum(['casual', 'work', 'date-night', 'weekend', 'formal', 'gym']).optional(),
-  season: z.enum(['spring-summer', 'fall-winter', 'all-season']).optional(),
+  occasion: z.enum(OCCASIONS).optional(),
+  season: z.enum(SEASONS).optional(),
   style_vibe: z.string().optional(),
   style_notes: z.string().optional(),
   trend_note: z.enum(['timeless', 'on-trend', 'classic-with-a-twist']).optional(),
   item_ids: z.array(z.string().uuid()).min(1),
+});
+
+const SuggestByOccasionSchema = z.object({
+  occasion: z.enum(OCCASIONS),
+  season: z.enum(SEASONS).optional(),
 });
 
 router.post('/suggest/:anchorItemId', requireAuth, async (req: AuthRequest, res: Response) => {
@@ -41,6 +54,34 @@ router.post('/suggest/:anchorItemId', requireAuth, async (req: AuthRequest, res:
     res.json(suggestions);
   } catch (err) {
     console.error('suggest outfits error:', err);
+    res.status(500).json({ error: 'Failed to generate suggestions' });
+  }
+});
+
+router.post('/suggest-by-occasion', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const parsed = SuggestByOccasionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { occasion, season } = parsed.data;
+
+    const { data: wardrobe, error: wardrobeError } = await adminSupabase
+      .from('clothing_items')
+      .select('*')
+      .eq('user_id', req.userId!);
+
+    if (wardrobeError) throw wardrobeError;
+    if (!wardrobe || wardrobe.length === 0) {
+      res.status(400).json({ error: 'Wardrobe is empty — add items before generating a look' });
+      return;
+    }
+
+    const suggestions = await generateOutfitsForOccasion(occasion, season, wardrobe);
+    res.json(suggestions);
+  } catch (err) {
+    console.error('suggest by occasion error:', err);
     res.status(500).json({ error: 'Failed to generate suggestions' });
   }
 });
