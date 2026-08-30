@@ -45,6 +45,8 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add-item" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="match" />
+          <Stack.Screen name="item/[id]" />
           <Stack.Screen name="outfit/[id]" />
         </Stack>
       </AuthGuard>

@@ -44,10 +44,18 @@ STYLE COHERENCE:
 - Smart-casual is the bridge between formal and casual
 - Mention when a look is timeless vs on-trend
 
+COHESION SCORE:
+- Rate each outfit 0–100 for how well the pieces work together, judged on the color, fabric, proportion, and style rules above.
+- Be honest and discriminating: a flawless, gallery-worthy pairing is 90+, a solid everyday look is 75–89, a workable but slightly off combination is 60–74, and a forced or clashing one is below 60.
+- Vary the scores across suggestions — do not give every outfit the same number.
+
+Order the array from highest cohesion_score to lowest.
+
 Respond ONLY with a valid JSON array — no markdown, no preamble:
 [
   {
     "item_ids": ["uuid1", "uuid2", "uuid3"],
+    "cohesion_score": 0-100 integer reflecting how well the pieces work together,
     "occasion": "one of: casual | work | date-night | weekend | formal | gym",
     "season": "spring-summer | fall-winter | all-season",
     "style_vibe": "2-3 word vibe (e.g. 'effortless chic', 'sharp minimalist')",

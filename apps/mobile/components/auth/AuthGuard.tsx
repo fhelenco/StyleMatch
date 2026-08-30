@@ -28,7 +28,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!session && !inAuthGroup && !isIndex) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      router.replace('/(tabs)/wardrobe');
+      router.replace('/(tabs)/home');
     }
   }, [session, loading, segments]);
 

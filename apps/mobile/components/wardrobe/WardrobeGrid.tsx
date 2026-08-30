@@ -61,7 +61,7 @@ export function WardrobeGrid({ items, loading }: WardrobeGridProps) {
         <ClothingCard
           item={item}
           width={cardWidth}
-          onPress={() => router.push({ pathname: '/add-item/confirm', params: { viewId: item.id } })}
+          onPress={() => router.push(`/item/${item.id}`)}
         />
       )}
     />

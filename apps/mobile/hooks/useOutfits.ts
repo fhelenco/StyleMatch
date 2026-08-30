@@ -3,6 +3,7 @@ import { apiRequest } from '../lib/api';
 
 export interface OutfitSuggestion {
   item_ids: string[];
+  cohesion_score: number;
   occasion: string;
   season: string;
   style_vibe: string;
@@ -27,8 +28,11 @@ export interface SavedOutfit {
 export function useSuggestOutfits(anchorItemId: string | null) {
   return useQuery<OutfitSuggestion[]>({
     queryKey: ['suggestions', anchorItemId],
+    // The backend route is POST /api/outfits/suggest/:id — a GET here 404s.
     queryFn: () =>
-      apiRequest<OutfitSuggestion[]>(`/api/outfits/suggest/${anchorItemId}`),
+      apiRequest<OutfitSuggestion[]>(`/api/outfits/suggest/${anchorItemId}`, {
+        method: 'POST',
+      }),
     enabled: !!anchorItemId,
     staleTime: 5 * 60 * 1000,
   });
@@ -57,6 +61,17 @@ export function useSaveOutfit() {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outfits'] });
+    },
+  });
+}
+
+export function useDeleteOutfit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiRequest(`/api/outfits/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['outfits'] });
     },

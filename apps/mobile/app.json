@@ -26,16 +26,20 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar",
       [
         "expo-camera",
-        { "cameraPermission": "StyleMatch needs camera access to photograph your clothing items." }
+        {
+          "cameraPermission": "StyleMatch needs camera access to photograph your clothing items."
+        }
       ],
       [
         "expo-image-picker",
-        { "photosPermission": "StyleMatch needs photo library access to import your clothing items." }
+        {
+          "photosPermission": "StyleMatch needs photo library access to import your clothing items."
+        }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

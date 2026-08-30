@@ -1,13 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-function TabIcon({ name, color }: { name: IconName; color: string }) {
-  return <Ionicons name={name} size={24} color={color} />;
-}
 
 export default function TabsLayout() {
   return (
@@ -21,37 +14,55 @@ export default function TabsLayout() {
           borderTopColor: '#E8E2DE',
           borderTopWidth: 1,
           paddingBottom: 4,
+          height: 56,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+        },
       }}
     >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home-outline" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="lookbook"
+        options={{
+          title: 'Lookbook',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="grid-outline" size={20} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="wardrobe"
         options={{
           title: 'Wardrobe',
-          tabBarIcon: ({ color }) => <TabIcon name="shirt-outline" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="suggestions"
-        options={{
-          title: 'Outfits',
-          tabBarIcon: ({ color }) => <TabIcon name="sparkles-outline" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendar',
-          tabBarIcon: ({ color }) => <TabIcon name="calendar-outline" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="shirt-outline" size={22} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <TabIcon name="person-outline" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person-outline" size={22} color={color} />
+          ),
         }}
+      />
+      <Tabs.Screen
+        name="match"
+        options={{ href: null }}
       />
     </Tabs>
   );
