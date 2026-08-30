@@ -331,7 +331,7 @@ const makeStyles = (c: ThemeColors) =>
     hero: { position: 'relative' },
     heroImg: {
       width: '100%',
-      aspectRatio: 1,
+      aspectRatio: 3 / 4,
       borderBottomLeftRadius: 28,
       borderBottomRightRadius: 28,
       backgroundColor: c.surfaceAlt,

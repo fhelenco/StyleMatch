@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { upload } from '../middleware/upload';
-import { resizeImage, removeImageBackground, bufferToBase64 } from '../services/imageService';
+import { removeImageBackground, frameGarmentImage, bufferToBase64 } from '../services/imageService';
 import { uploadToStorage, deleteFromStorage, adminSupabase } from '../services/supabaseService';
 import { analyzeGarment } from '../services/claudeService';
 
@@ -34,8 +34,8 @@ router.post('/analyze', requireAuth, upload.single('image'), async (req: AuthReq
     try {
       processed = await removeImageBackground(req.file.buffer);
     } catch (bgErr) {
-      console.warn('Background removal failed, using original image:', bgErr);
-      processed = await resizeImage(req.file.buffer);
+      console.warn('Background removal failed, framing the raw photo:', bgErr);
+      processed = await frameGarmentImage(req.file.buffer);
     }
 
     const base64 = bufferToBase64(processed);

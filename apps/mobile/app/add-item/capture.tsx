@@ -64,7 +64,7 @@ export default function CaptureScreen() {
 
       {imageUri ? (
         <View style={styles.preview}>
-          <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+          <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
           <View style={styles.actions}>
             <Button title="Choose Different" onPress={() => setImageUri(null)} variant="secondary" />
             <Button title="Analyze with AI" onPress={handleAnalyze} loading={loading} />
