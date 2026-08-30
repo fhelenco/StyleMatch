@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Modal, Platform, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, useThemedStyles } from '../../contexts/theme';
 import type { ThemeColors } from '../../lib/theme';
@@ -16,17 +16,42 @@ interface ActionSheetProps {
   title?: string;
   options: ActionSheetOption[];
   onClose: () => void;
+  /**
+   * Fires once the sheet has fully closed. Use this to launch anything that
+   * presents its own native UI (image picker, share sheet) — doing so while
+   * this modal is still on screen is a no-op on iOS.
+   */
+  onDismissed?: () => void;
 }
 
 /**
  * Bottom action sheet. Renders inside the app (not a native/browser dialog), so
  * it works on native, web, and inside sandboxed previews.
  */
-export function ActionSheet({ visible, title, options, onClose }: ActionSheetProps) {
+export function ActionSheet({ visible, title, options, onClose, onDismissed }: ActionSheetProps) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  // `Modal.onDismiss` is iOS-only, so emulate it elsewhere once `visible` flips
+  // false. The ref guards against firing on the initial mount.
+  const wasVisible = useRef(visible);
+  useEffect(() => {
+    const closed = wasVisible.current && !visible;
+    wasVisible.current = visible;
+    if (closed && Platform.OS !== 'ios') {
+      const id = setTimeout(() => onDismissed?.(), 80);
+      return () => clearTimeout(id);
+    }
+  }, [visible, onDismissed]);
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      onDismiss={Platform.OS === 'ios' ? onDismissed : undefined}
+    >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
           {!!title && <Text style={styles.title}>{title}</Text>}

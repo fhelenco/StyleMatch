@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -37,15 +37,13 @@ export default function ItemDetailScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Set when "Replace photo" is tapped; the picker is launched only after the
+  // action sheet has fully closed (ActionSheet.onDismissed) — presenting it
+  // while that modal is still up is a silent no-op on iOS.
+  const [pendingReplace, setPendingReplace] = useState(false);
 
-  const handleReplacePhoto = async () => {
-    setMenuVisible(false);
+  const runReplacePhoto = async () => {
     if (!item) return;
-
-    // iOS refuses to present the image picker while the action-sheet modal is
-    // still animating out — wait for it to finish dismissing first.
-    await new Promise((r) => setTimeout(r, 400));
-
     const uri = await pickFromGallery();
     if (!uri) return;
     setBusy(true);
@@ -69,6 +67,18 @@ export default function ItemDetailScreen() {
       setBusy(false);
     }
   };
+
+  // Launch the picker only once the action sheet has fully closed —
+  // ActionSheet.onDismissed is the primary trigger; this is a fallback for
+  // when Modal.onDismiss doesn't fire.
+  useEffect(() => {
+    if (menuVisible || !pendingReplace) return;
+    const id = setTimeout(() => {
+      setPendingReplace(false);
+      runReplacePhoto();
+    }, 450);
+    return () => clearTimeout(id);
+  }, [menuVisible, pendingReplace]);
 
   const handleDelete = () => {
     setConfirmVisible(false);
@@ -197,8 +207,21 @@ export default function ItemDetailScreen() {
         visible={menuVisible}
         title="Manage piece"
         onClose={() => setMenuVisible(false)}
+        onDismissed={() => {
+          if (pendingReplace) {
+            setPendingReplace(false);
+            runReplacePhoto();
+          }
+        }}
         options={[
-          { label: 'Replace photo', icon: 'camera-outline', onPress: handleReplacePhoto },
+          {
+            label: 'Replace photo',
+            icon: 'camera-outline',
+            onPress: () => {
+              setPendingReplace(true);
+              setMenuVisible(false);
+            },
+          },
           {
             label: 'Delete item',
             icon: 'trash-outline',
