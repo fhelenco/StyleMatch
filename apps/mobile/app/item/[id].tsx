@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +41,11 @@ export default function ItemDetailScreen() {
   const handleReplacePhoto = async () => {
     setMenuVisible(false);
     if (!item) return;
+
+    // iOS refuses to present the image picker while the action-sheet modal is
+    // still animating out — wait for it to finish dismissing first.
+    await new Promise((r) => setTimeout(r, 400));
+
     const uri = await pickFromGallery();
     if (!uri) return;
     setBusy(true);
@@ -54,8 +60,11 @@ export default function ItemDetailScreen() {
         id: item.id,
         updates: { image_url: result.image_url, image_path: result.image_path },
       });
-    } catch {
-      // best-effort; the item keeps its previous photo on failure
+    } catch (err) {
+      Alert.alert(
+        'Could not replace photo',
+        err instanceof Error ? err.message : 'Something went wrong. Try again.',
+      );
     } finally {
       setBusy(false);
     }
