@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 
 export async function pickFromGallery(): Promise<string | null> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,12 +35,19 @@ export async function uriToBase64(uri: string): Promise<string> {
   return FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
 }
 
-export function uriToFormData(uri: string): FormData {
+export async function uriToFormData(uri: string): Promise<FormData> {
   const formData = new FormData();
-  formData.append('image', {
-    uri,
-    type: 'image/jpeg',
-    name: 'item.jpg',
-  } as unknown as Blob);
+  if (Platform.OS === 'web') {
+    // On web the picker returns a blob:/data: URL. Multer needs a real Blob,
+    // not the { uri } shim that React Native's fetch understands on native.
+    const blob = await fetch(uri).then((r) => r.blob());
+    formData.append('image', blob, 'item.jpg');
+  } else {
+    formData.append('image', {
+      uri,
+      type: 'image/jpeg',
+      name: 'item.jpg',
+    } as unknown as Blob);
+  }
   return formData;
 }

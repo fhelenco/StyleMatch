@@ -41,6 +41,7 @@ export interface OutfitWithItems extends Outfit {
 
 export interface OutfitSuggestion {
   item_ids: string[];
+  cohesion_score: number;
   occasion: string;
   season: string;
   style_vibe: string;
@@ -50,12 +51,16 @@ export interface OutfitSuggestion {
 
 export interface GarmentAnalysis {
   label: string;
+  brand?: string | null;
   garment_type: string;
   category: string;
+  collection?: string;
   style_category: string;
   pattern: string;
   fabric: string;
+  fabric_care?: string;
   season: string;
+  tags?: string[];
   colors: ColorSwatch[];
 }
 

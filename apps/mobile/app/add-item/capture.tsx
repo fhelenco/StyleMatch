@@ -34,7 +34,7 @@ export default function CaptureScreen() {
     if (!imageUri) return;
     setLoading(true);
     try {
-      const formData = uriToFormData(imageUri);
+      const formData = await uriToFormData(imageUri);
       const result = await apiUpload('/api/wardrobe/analyze', formData);
       router.push({
         pathname: '/add-item/confirm',

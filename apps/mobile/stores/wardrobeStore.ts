@@ -29,6 +29,7 @@ interface WardrobeState {
   items: ClothingItem[];
   setItems: (items: ClothingItem[]) => void;
   addItem: (item: ClothingItem) => void;
+  updateItem: (item: ClothingItem) => void;
   removeItem: (id: string) => void;
   hydrate: () => Promise<void>;
 }
@@ -47,6 +48,14 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
 
   addItem: async (item) => {
     const items = [item, ...get().items];
+    set({ items });
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {}
+  },
+
+  updateItem: async (item) => {
+    const items = get().items.map((i) => (i.id === item.id ? { ...i, ...item } : i));
     set({ items });
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));

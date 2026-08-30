@@ -8,3 +8,5 @@ ios/
 android/
 *.tsbuildinfo
 .DS_Store
+.claude/
+*.bak57

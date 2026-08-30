@@ -15,7 +15,7 @@ export default function SplashScreen() {
   const router = useRouter();
 
   if (!loading && session) {
-    return <Redirect href="/(tabs)/wardrobe" />;
+    return <Redirect href="/(tabs)/home" />;
   }
 
   return (

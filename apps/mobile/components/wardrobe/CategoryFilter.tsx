@@ -23,6 +23,7 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.container}
     >
       {CATEGORIES.map((cat) => {
@@ -45,11 +46,14 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 16, gap: 8, paddingVertical: 8 },
+  // flexGrow:0 keeps the horizontal row from stretching to fill the column,
+  // alignItems:center stops each chip from being stretched to the row height.
+  scroll: { flexGrow: 0, flexShrink: 0 },
+  container: { paddingHorizontal: 16, gap: 8, paddingVertical: 8, alignItems: 'center' },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
     borderWidth: 1.5,
     borderColor: '#E8E2DE',
     backgroundColor: '#FFFFFF',

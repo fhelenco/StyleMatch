@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,13 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Switch,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
+import { useSavedOutfits } from '../../hooks/useOutfits';
 
 function SettingsRow({
   label,
@@ -44,11 +46,47 @@ function SettingsRow({
   );
 }
 
+function SegmentedControl({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: string[];
+  selected: string;
+  onSelect: (val: string) => void;
+}) {
+  return (
+    <View style={styles.segmented}>
+      {options.map((opt) => (
+        <TouchableOpacity
+          key={opt}
+          style={[styles.segment, selected === opt && styles.segmentActive]}
+          onPress={() => onSelect(opt)}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.segmentText,
+              selected === opt && styles.segmentTextActive,
+            ]}
+          >
+            {opt}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuthStore();
   const items = useWardrobeStore((s) => s.items);
+  const { data: outfits } = useSavedOutfits();
+  const [theme, setTheme] = useState('Light');
+  const [notifications, setNotifications] = useState(false);
 
   const initial = user?.email?.[0].toUpperCase() ?? '?';
+  const outfitCount = outfits?.length ?? 0;
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
@@ -69,14 +107,14 @@ export default function ProfileScreen() {
               <Text style={styles.avatarInitial}>{initial}</Text>
             </View>
             <View style={styles.editBadge}>
-              <Ionicons name="pencil" size={10} color="#FFFFFF" />
+              <Ionicons name="add" size={12} color="#FFFFFF" />
             </View>
           </View>
           <Text style={styles.userName}>
             {user?.email?.split('@')[0] ?? 'User'}
           </Text>
           <Text style={styles.userSubtitle}>
-            {items.length} pieces · {items.filter((i) => i.times_worn > 0).length} outfits worn
+            {items.length} pieces · {outfitCount} outfits saved
           </Text>
         </View>
 
@@ -88,9 +126,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>
-              {items.filter((i) => i.times_worn > 0).length}
-            </Text>
+            <Text style={styles.statValue}>{outfitCount}</Text>
             <Text style={styles.statLabel}>Outfits</Text>
           </View>
           <View style={styles.statDivider} />
@@ -102,7 +138,33 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Preferences */}
+        <Text style={styles.sectionHeader}>PREFERENCES</Text>
+        <View style={styles.group}>
+          <SettingsRow label="Language" value="PT-BR" onPress={() => {}} />
+          <View style={styles.separator} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Theme</Text>
+            <SegmentedControl
+              options={['System', 'Light', 'Dark']}
+              selected={theme}
+              onSelect={setTheme}
+            />
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Notifications</Text>
+            <Switch
+              value={notifications}
+              onValueChange={setNotifications}
+              trackColor={{ false: '#E8E2DE', true: '#C9A99A' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        </View>
+
         {/* My Style group */}
+        <Text style={styles.sectionHeader}>MY STYLE</Text>
         <View style={styles.group}>
           <SettingsRow label="Style preferences" onPress={() => {}} />
           <View style={styles.separator} />
@@ -112,6 +174,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Account group */}
+        <Text style={styles.sectionHeader}>ACCOUNT</Text>
         <View style={styles.group}>
           <SettingsRow label="Edit profile" onPress={() => {}} />
           <View style={styles.separator} />
@@ -128,8 +191,12 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scroll: { padding: 16, gap: 16, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: '700', color: '#1A1A1A' },
+  scroll: { padding: 16, gap: 12, paddingBottom: 40 },
+  title: {
+    fontSize: 28,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#1A1A1A',
+  },
 
   avatarCard: {
     backgroundColor: '#FFFFFF',
@@ -177,6 +244,15 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, color: '#8C8C8C', textTransform: 'uppercase', letterSpacing: 0.5 },
   statDivider: { width: 1, backgroundColor: '#E8E2DE', marginVertical: 4 },
 
+  sectionHeader: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8C8C8C',
+    letterSpacing: 2,
+    marginTop: 8,
+    marginLeft: 4,
+  },
+
   group: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -196,4 +272,32 @@ const styles = StyleSheet.create({
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowValue: { fontSize: 14, color: '#8C8C8C' },
   separator: { height: 1, backgroundColor: '#E8E2DE', marginLeft: 16 },
+
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: '#F5F0ED',
+    borderRadius: 8,
+    padding: 2,
+  },
+  segment: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  segmentActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 13,
+    color: '#8C8C8C',
+    fontWeight: '500',
+  },
+  segmentTextActive: {
+    color: '#1A1A1A',
+  },
 });

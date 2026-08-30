@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { upload } from '../middleware/upload';
-import { resizeImage, bufferToBase64 } from '../services/imageService';
+import { resizeImage, removeImageBackground, bufferToBase64 } from '../services/imageService';
 import { uploadToStorage, deleteFromStorage, adminSupabase } from '../services/supabaseService';
 import { analyzeGarment } from '../services/claudeService';
 
@@ -30,11 +30,18 @@ router.post('/analyze', requireAuth, upload.single('image'), async (req: AuthReq
       return;
     }
 
-    const resized = await resizeImage(req.file.buffer);
-    const base64 = bufferToBase64(resized);
+    let processed: Buffer;
+    try {
+      processed = await removeImageBackground(req.file.buffer);
+    } catch (bgErr) {
+      console.warn('Background removal failed, using original image:', bgErr);
+      processed = await resizeImage(req.file.buffer);
+    }
+
+    const base64 = bufferToBase64(processed);
     const itemId = uuidv4();
 
-    const { url, path } = await uploadToStorage(req.userId!, itemId, resized);
+    const { url, path } = await uploadToStorage(req.userId!, itemId, processed);
     const analysis = await analyzeGarment(base64, 'image/jpeg');
 
     res.json({ ...analysis, image_url: url, image_path: path, temp_id: itemId });
@@ -109,7 +116,7 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.patch('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const allowed = ['label', 'notes', 'style_category', 'season', 'pattern', 'fabric', 'times_worn', 'last_worn_at'];
+    const allowed = ['label', 'notes', 'style_category', 'season', 'pattern', 'fabric', 'times_worn', 'last_worn_at', 'image_url', 'image_path', 'colors'];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in req.body) updates[key] = req.body[key];
