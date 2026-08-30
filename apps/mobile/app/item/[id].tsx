@@ -7,6 +7,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -68,9 +70,8 @@ export default function ItemDetailScreen() {
     }
   };
 
-  // Launch the picker only once the action sheet has fully closed —
-  // ActionSheet.onDismissed is the primary trigger; this is a fallback for
-  // when Modal.onDismiss doesn't fire.
+  // Non-iOS: launch the picker only once the custom action sheet has fully
+  // closed (ActionSheet.onDismissed is the primary trigger; this is a fallback).
   useEffect(() => {
     if (menuVisible || !pendingReplace) return;
     const id = setTimeout(() => {
@@ -79,6 +80,28 @@ export default function ItemDetailScreen() {
     }, 450);
     return () => clearTimeout(id);
   }, [menuVisible, pendingReplace]);
+
+  const openManageMenu = () => {
+    // iOS: use the native action sheet. Its callback fires only after the sheet
+    // is fully gone, so launching the image picker from it works reliably —
+    // unlike dismissing our own <Modal> and racing the picker presentation.
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Manage piece',
+          options: ['Replace photo', 'Delete item', 'Cancel'],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 2,
+        },
+        (index) => {
+          if (index === 0) runReplacePhoto();
+          else if (index === 1) setConfirmVisible(true);
+        },
+      );
+      return;
+    }
+    setMenuVisible(true);
+  };
 
   const handleDelete = () => {
     setConfirmVisible(false);
@@ -127,7 +150,7 @@ export default function ItemDetailScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.circleBtn, styles.circleRight]}
-            onPress={() => setMenuVisible(true)}
+            onPress={openManageMenu}
             hitSlop={8}
           >
             <Ionicons name="ellipsis-horizontal" size={18} color={colors.foreground} />
