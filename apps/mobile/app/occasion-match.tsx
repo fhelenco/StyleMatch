@@ -37,7 +37,13 @@ const SEASONS: Array<{ label: string; value: string }> = [
   { label: 'All-Season', value: 'all-season' },
 ];
 
-const ROLES = ['FOUNDATION', 'LAYER', 'BASE'] as const;
+const CATEGORY_ROLE: Record<string, string> = {
+  shoes: 'FOUNDATION',
+  bottoms: 'BASE',
+  tops: 'LAYER',
+  outerwear: 'OUTER LAYER',
+  accessories: 'ACCENT',
+};
 
 export default function OccasionMatchScreen() {
   const router = useRouter();
@@ -103,7 +109,11 @@ export default function OccasionMatchScreen() {
   };
 
   const renderSuggestion = ({ item: suggestion }: { item: OutfitSuggestion }) => {
-    const matchedItems = items.filter((i) => suggestion.item_ids.includes(i.id));
+    // Keep the stylist's ordering (shoes → bottom → top → layers) and show
+    // every piece — capping at 3 was silently hiding the bottoms.
+    const matchedItems = suggestion.item_ids
+      .map((id) => items.find((i) => i.id === id))
+      .filter((i): i is (typeof items)[number] => !!i);
     return (
       <ScrollView
         style={{ width }}
@@ -121,13 +131,13 @@ export default function OccasionMatchScreen() {
         </View>
 
         {/* Matched Pieces */}
-        {matchedItems.slice(0, 3).map((item, index) => (
+        {matchedItems.map((item) => (
           <View key={item.id} style={styles.pieceCard}>
             <View style={styles.pieceThumb}>
               <Image source={{ uri: item.image_url }} style={styles.pieceImg} resizeMode="cover" />
             </View>
             <View style={styles.pieceInfo}>
-              <Text style={styles.pieceRole}>{ROLES[index] || 'ACCENT'}</Text>
+              <Text style={styles.pieceRole}>{CATEGORY_ROLE[item.category] ?? 'PIECE'}</Text>
               <Text style={styles.pieceName}>{item.label}</Text>
             </View>
           </View>

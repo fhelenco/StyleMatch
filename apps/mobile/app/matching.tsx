@@ -17,7 +17,13 @@ import { useSuggestOutfits, useSaveOutfit } from '../hooks/useOutfits';
 import { useTheme, useThemedStyles } from '../contexts/theme';
 import type { ThemeColors } from '../lib/theme';
 
-const ROLES = ['FOUNDATION', 'LAYER', 'BASE'] as const;
+const CATEGORY_ROLE: Record<string, string> = {
+  shoes: 'FOUNDATION',
+  bottoms: 'BASE',
+  tops: 'LAYER',
+  outerwear: 'OUTER LAYER',
+  accessories: 'ACCENT',
+};
 
 export default function MatchScreen() {
   const router = useRouter();
@@ -32,7 +38,9 @@ export default function MatchScreen() {
 
   const suggestion = suggestions?.[0];
   const matchedItems = suggestion
-    ? items.filter((item) => suggestion.item_ids.includes(item.id))
+    ? suggestion.item_ids
+        .map((id) => items.find((i) => i.id === id))
+        .filter((i): i is (typeof items)[number] => !!i)
     : [];
 
   const handleSave = () => {
@@ -118,7 +126,7 @@ export default function MatchScreen() {
           </View>
 
           {/* Matched Pieces */}
-          {matchedItems.slice(0, 3).map((item, index) => (
+          {matchedItems.map((item) => (
             <View key={item.id} style={styles.pieceCard}>
               <View style={styles.pieceThumb}>
                 <Image
@@ -129,7 +137,7 @@ export default function MatchScreen() {
               </View>
               <View style={styles.pieceInfo}>
                 <Text style={styles.pieceRole}>
-                  {ROLES[index] || 'ACCENT'}
+                  {CATEGORY_ROLE[item.category] ?? 'PIECE'}
                 </Text>
                 <Text style={styles.pieceName}>{item.label}</Text>
               </View>

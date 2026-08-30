@@ -21,7 +21,17 @@ ${JSON.stringify(anchorItem, null, 2)}
 Their wardrobe contains these items:
 ${JSON.stringify(wardrobeList, null, 2)}
 
-Generate 3 to 5 outfit combinations. Apply these fashion rules:
+Generate 3 to 5 outfit combinations, each built around the anchor piece.
+
+OUTFIT COMPLETENESS (most important — do not violate):
+- Every outfit MUST be a complete head-to-toe look including the anchor piece.
+- It MUST contain a bottom garment (trousers, jeans, skirt, shorts, leggings) OR a one-piece (dress, jumpsuit) — unless the anchor piece itself already is one.
+- NEVER return a look that is only tops and/or outerwear and shoes. A blazer or jacket does NOT count as a bottom.
+- Add a top when the look is not a one-piece; add shoes when the wardrobe has any.
+- Outerwear is optional, layered on top of an already-complete outfit.
+- Only skip a bottom if the wardrobe genuinely has no bottoms and no one-pieces.
+
+Apply these fashion rules:
 
 COLOR RULES:
 - Use complementary, analogous, triadic, or monochromatic color schemes
@@ -91,7 +101,15 @@ ${season ? `Target season: ${season}` : 'No specific season constraint — pick 
 Their wardrobe contains these items:
 ${JSON.stringify(wardrobeList, null, 2)}
 
-Generate 3 to 5 complete outfit combinations suited to this occasion${season ? ' and season' : ''}, using ONLY items from the wardrobe above. Each outfit must be a coherent, wearable combination (at minimum a top+bottom or a single one-piece item, plus shoes when available) — do not force items together in ways that don't make sense for the occasion.
+Generate 3 to 5 outfit combinations suited to this occasion${season ? ' and season' : ''}, using ONLY items from the wardrobe above.
+
+OUTFIT COMPLETENESS (most important — do not violate):
+- Every outfit MUST be a complete head-to-toe look. It MUST include a bottom garment (trousers, jeans, skirt, shorts, leggings) OR a one-piece (dress, jumpsuit, romper).
+- NEVER return a look that is only a top and/or outerwear and shoes. A blazer or jacket does NOT count as a bottom and does NOT replace one.
+- Add a top whenever the look is not a one-piece. Add shoes whenever the wardrobe contains any.
+- Outerwear (blazer, coat, jacket) is optional and layered on top of an already-complete outfit.
+- The only exception: if the wardrobe genuinely contains no bottoms and no one-pieces, return the best top + shoes pairing you can and say so in style_notes.
+- Do not force unrelated items together just to pad the outfit.
 
 Apply these fashion rules:
 
@@ -123,10 +141,11 @@ COHESION SCORE:
 
 Order the array from highest cohesion_score to lowest.
 
-Respond ONLY with a valid JSON array — no markdown, no preamble:
+Respond ONLY with a valid JSON array — no markdown, no preamble.
+Order item_ids as: shoes, bottom (or one-piece), top, then any outerwear/accessories.
 [
   {
-    "item_ids": ["uuid1", "uuid2", "uuid3"],
+    "item_ids": ["shoesId", "bottomId", "topId", "optionalLayerId"],
     "cohesion_score": 0-100 integer reflecting how well the pieces work together,
     "occasion": "${occasion}",
     "season": "${season ?? 'all-season'}",

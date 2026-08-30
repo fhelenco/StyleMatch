@@ -46,17 +46,28 @@ function score(candidate: DuplicateCandidate, item: ClothingItem): number {
     return 0;
   }
 
+  // A different pattern (e.g. printed vs. solid) is a strong, easy-to-read
+  // visual signal that two garments are NOT the same piece — bail early
+  // rather than let a shared color/category/generic-type still add up to a
+  // false match.
+  const patC = norm(candidate.pattern);
+  const patI = norm(item.pattern);
+  if (patC && patI && patC !== patI) {
+    return 0;
+  }
+
   let s = 0;
 
-  const gtC = norm(candidate.garment_type);
-  const gtI = norm(item.garment_type);
-  if (gtC && gtI && (gtC === gtI || gtC.includes(gtI) || gtI.includes(gtC))) s += 0.35;
-
+  // Proportional token overlap, not substring containment — "shirt" is a
+  // substring of nearly every top's garment_type, so a plain `.includes()`
+  // check credited almost any two shirts as the same piece regardless of how
+  // different they actually were.
+  s += tokenOverlap(words(candidate.garment_type), words(item.garment_type)) * 0.3;
   s += tokenOverlap(words(candidate.label), words(item.label)) * 0.35;
-  s += colorOverlap(candidate.colors, item.colors) * 0.2;
+  s += colorOverlap(candidate.colors, item.colors) * 0.15;
 
+  if (patC && patC === patI) s += 0.1;
   if (norm(candidate.style_category) && norm(candidate.style_category) === norm(item.style_category)) s += 0.05;
-  if (norm(candidate.pattern) && norm(candidate.pattern) === norm(item.pattern)) s += 0.05;
   if (norm(candidate.fabric) && norm(candidate.fabric) === norm(item.fabric)) s += 0.05;
 
   return s;
@@ -72,5 +83,5 @@ export function findLikelyDuplicate(
     const s = score(candidate, item);
     if (!best || s > best.s) best = { item, s };
   }
-  return best && best.s >= 0.6 ? best.item : null;
+  return best && best.s >= 0.7 ? best.item : null;
 }
