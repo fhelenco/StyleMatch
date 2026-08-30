@@ -14,8 +14,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiRequest } from '../../lib/api';
 import { ColorSwatch } from '../../components/ui/ColorSwatch';
-import { useWardrobeStore } from '../../stores/wardrobeStore';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useWardrobeStore, type ClothingItem } from '../../stores/wardrobeStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { findLikelyDuplicate } from '../../lib/duplicateCheck';
 import { useTheme, useThemedStyles } from '../../contexts/theme';
 import type { ThemeColors } from '../../lib/theme';
 
@@ -26,10 +28,12 @@ export default function ConfirmScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const addItem = useWardrobeStore((s) => s.addItem);
+  const wardrobeItems = useWardrobeStore((s) => s.items);
 
   const initial = params.data ? JSON.parse(params.data) : {};
   const [label, setLabel] = useState(initial.label || '');
   const [saving, setSaving] = useState(false);
+  const [dupItem, setDupItem] = useState<ClothingItem | null>(null);
 
   // Prefer the AI-cut-out image returned from the analyze step; fall back to
   // the raw capture while it is still uploading.
@@ -44,11 +48,7 @@ export default function ConfirmScreen() {
 
   const colors: Array<{ name: string; hex: string }> = initial.colors || [];
 
-  const handleSave = async () => {
-    if (!label.trim()) {
-      Alert.alert('Name required', 'Please give this piece a name.');
-      return;
-    }
+  const doSave = async () => {
     setSaving(true);
     try {
       const body = {
@@ -76,6 +76,30 @@ export default function ConfirmScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (!label.trim()) {
+      Alert.alert('Name required', 'Please give this piece a name.');
+      return;
+    }
+    const dup = findLikelyDuplicate(
+      {
+        label: label.trim(),
+        garment_type: initial.garment_type,
+        category: initial.category,
+        style_category: initial.style_category,
+        fabric: initial.fabric,
+        pattern: initial.pattern,
+        colors: initial.colors,
+      },
+      wardrobeItems,
+    );
+    if (dup) {
+      setDupItem(dup);
+      return;
+    }
+    doSave();
   };
 
   const metaLine = [initial.category, initial.collection]
@@ -192,6 +216,23 @@ export default function ConfirmScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      <ConfirmDialog
+        visible={!!dupItem}
+        title="Already in your wardrobe?"
+        message={
+          dupItem
+            ? `"${dupItem.label}" looks like the same piece. Add this one anyway?`
+            : ''
+        }
+        confirmLabel="Add anyway"
+        cancelLabel="Cancel"
+        onCancel={() => setDupItem(null)}
+        onConfirm={() => {
+          setDupItem(null);
+          doSave();
+        }}
+      />
     </View>
   );
 }
