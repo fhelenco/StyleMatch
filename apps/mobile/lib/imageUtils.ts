@@ -1,15 +1,17 @@
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
+// NB: `allowsEditing` is deliberately off. On iOS the built-in editor forces a
+// 1:1 square crop (the `aspect` prop is Android-only), which chops the top and
+// bottom off full-length garment photos. We keep the whole frame — the backend
+// removes the background and flattens it onto an off-white backdrop anyway.
 export async function pickFromGallery(): Promise<string | null> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') return null;
 
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [3, 4],
+    mediaTypes: ['images'],
+    allowsEditing: false,
     quality: 0.9,
   });
 
@@ -22,17 +24,13 @@ export async function pickFromCamera(): Promise<string | null> {
   if (status !== 'granted') return null;
 
   const result = await ImagePicker.launchCameraAsync({
-    allowsEditing: true,
-    aspect: [3, 4],
+    mediaTypes: ['images'],
+    allowsEditing: false,
     quality: 0.9,
   });
 
   if (result.canceled) return null;
   return result.assets[0].uri;
-}
-
-export async function uriToBase64(uri: string): Promise<string> {
-  return FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
 }
 
 export async function uriToFormData(uri: string): Promise<FormData> {
