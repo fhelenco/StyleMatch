@@ -1,14 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
-const COLORS: Record<string, string> = {
-  casual: '#8C8C8C',
-  work: '#4CAF82',
-  'date-night': '#C9A99A',
-  weekend: '#E8A838',
-  formal: '#1A1A1A',
-  gym: '#4C9ACF',
-};
+import { useTheme } from '../../contexts/theme';
 
 interface OccasionBadgeProps {
   occasion: string;
@@ -16,15 +8,24 @@ interface OccasionBadgeProps {
 }
 
 export function OccasionBadge({ occasion, season }: OccasionBadgeProps) {
-  const color = COLORS[occasion] || '#8C8C8C';
+  const { colors } = useTheme();
+  const palette: Record<string, string> = {
+    casual: colors.muted,
+    work: colors.success,
+    'date-night': colors.accent,
+    weekend: colors.warning,
+    formal: colors.foreground,
+    gym: '#4C9ACF',
+  };
+  const color = palette[occasion] || colors.muted;
   return (
     <View style={styles.row}>
       <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
         <Text style={[styles.text, { color }]}>{occasion}</Text>
       </View>
       {season && (
-        <View style={[styles.badge, { backgroundColor: '#F5F0ED', borderColor: '#E8E2DE' }]}>
-          <Text style={[styles.text, { color: '#8C8C8C' }]}>{season}</Text>
+        <View style={[styles.badge, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <Text style={[styles.text, { color: colors.muted }]}>{season}</Text>
         </View>
       )}
     </View>

@@ -12,8 +12,12 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export default function RegisterScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +59,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#8C8C8C"
+            placeholderTextColor={colors.muted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -64,7 +68,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password (min 8 characters)"
-            placeholderTextColor="#8C8C8C"
+            placeholderTextColor={colors.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -87,23 +91,24 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  content: { flex: 1, justifyContent: 'center', padding: 32, gap: 8 },
-  wordmark: { fontSize: 36, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
-  tagline: { fontSize: 15, color: '#8C8C8C', textAlign: 'center', marginBottom: 32 },
-  form: { gap: 12 },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E8E2DE',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#1A1A1A',
-  },
-  link: { alignItems: 'center', marginTop: 24 },
-  linkText: { fontSize: 14, color: '#8C8C8C' },
-  linkBold: { color: '#C9A99A', fontWeight: '600' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { flex: 1, justifyContent: 'center', padding: 32, gap: 8 },
+    wordmark: { fontSize: 36, fontWeight: '700', color: c.foreground, textAlign: 'center' },
+    tagline: { fontSize: 15, color: c.muted, textAlign: 'center', marginBottom: 32 },
+    form: { gap: 12 },
+    input: {
+      backgroundColor: c.inputBg,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: c.foreground,
+    },
+    link: { alignItems: 'center', marginTop: 24 },
+    linkText: { fontSize: 14, color: c.muted },
+    linkBold: { color: c.accent, fontWeight: '600' },
+  });

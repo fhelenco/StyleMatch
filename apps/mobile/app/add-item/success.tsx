@@ -3,15 +3,19 @@ import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui/Button';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export default function SuccessScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.icon}>
-          <Ionicons name="checkmark-circle" size={64} color="#4CAF82" />
+          <Ionicons name="checkmark-circle" size={64} color={colors.success} />
         </View>
         <Text style={styles.title}>Item Added!</Text>
         <Text style={styles.subtitle}>
@@ -31,10 +35,11 @@ export default function SuccessScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
-  icon: { marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: '#1A1A1A' },
-  subtitle: { fontSize: 15, color: '#8C8C8C', textAlign: 'center', marginBottom: 16 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 },
+    icon: { marginBottom: 8 },
+    title: { fontSize: 28, fontWeight: '700', color: c.foreground },
+    subtitle: { fontSize: 15, color: c.muted, textAlign: 'center', marginBottom: 16 },
+  });

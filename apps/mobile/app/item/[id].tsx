@@ -17,10 +17,14 @@ import { useWardrobeStore, ClothingItem } from '../../stores/wardrobeStore';
 import { useClothingItem, useDeleteItem, useUpdateItem } from '../../hooks/useWardrobe';
 import { pickFromGallery, uriToFormData } from '../../lib/imageUtils';
 import { apiUpload } from '../../lib/api';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const storeItem = useWardrobeStore((s) => s.items.find((i) => i.id === id));
   const { data: fetched, isLoading } = useClothingItem(storeItem ? '' : id!);
@@ -69,7 +73,7 @@ export default function ItemDetailScreen() {
     return (
       <View style={[styles.container, styles.center]}>
         {isLoading ? (
-          <ActivityIndicator size="large" color="#C9A99A" />
+          <ActivityIndicator size="large" color={colors.accent} />
         ) : (
           <>
             <Text style={styles.notFound}>Piece not found.</Text>
@@ -100,14 +104,14 @@ export default function ItemDetailScreen() {
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/wardrobe'))}
             hitSlop={8}
           >
-            <Ionicons name="chevron-back" size={20} color="#1A1A1A" />
+            <Ionicons name="chevron-back" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.circleBtn, styles.circleRight]}
             onPress={() => setMenuVisible(true)}
             hitSlop={8}
           >
-            <Ionicons name="ellipsis-horizontal" size={18} color="#1A1A1A" />
+            <Ionicons name="ellipsis-horizontal" size={18} color={colors.foreground} />
           </TouchableOpacity>
         </View>
 
@@ -133,7 +137,7 @@ export default function ItemDetailScreen() {
           <View style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.cardIcon}>
-                <Ionicons name="water-outline" size={18} color="#A07B6F" />
+                <Ionicons name="water-outline" size={18} color={colors.accentDark} />
               </View>
               <View style={styles.cardRowText}>
                 <Text style={styles.cardRowTitle}>FABRIC CARE</Text>
@@ -157,7 +161,7 @@ export default function ItemDetailScreen() {
 
             <View style={styles.cardRow}>
               <View style={styles.cardIcon}>
-                <Ionicons name="time-outline" size={18} color="#A07B6F" />
+                <Ionicons name="time-outline" size={18} color={colors.accentDark} />
               </View>
               <View style={styles.cardRowText}>
                 <Text style={styles.cardRowTitle}>LAST WORN</Text>
@@ -172,7 +176,7 @@ export default function ItemDetailScreen() {
       <View style={styles.ctaWrap}>
         <TouchableOpacity
           style={styles.cta}
-          onPress={() => router.push({ pathname: '/match', params: { anchor: item.id } })}
+          onPress={() => router.push({ pathname: '/matching', params: { anchor: item.id } })}
           activeOpacity={0.85}
         >
           <Text style={styles.ctaText}>CREATE OUTFIT</Text>
@@ -213,7 +217,7 @@ export default function ItemDetailScreen() {
       {/* Busy overlay while replacing the photo */}
       {busy && (
         <View style={styles.busyOverlay}>
-          <ActivityIndicator size="large" color="#C9A99A" />
+          <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.busyText}>Updating photo…</Text>
         </View>
       )}
@@ -307,117 +311,118 @@ function lastWornText(item: ClothingItem): string {
 
 /* ---------- styles ---------- */
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
-  busyOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250,250,250,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 14,
-  },
-  busyText: { fontSize: 15, color: '#8C8C8C' },
-  notFound: { fontSize: 16, color: '#8C8C8C' },
-  backLink: { fontSize: 14, color: '#C9A99A', fontWeight: '600' },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
+    busyOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: c.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 14,
+    },
+    busyText: { fontSize: 15, color: c.muted },
+    notFound: { fontSize: 16, color: c.muted },
+    backLink: { fontSize: 14, color: c.accent, fontWeight: '600' },
 
-  scroll: { paddingBottom: 120 },
+    scroll: { paddingBottom: 120 },
 
-  hero: { position: 'relative' },
-  heroImg: {
-    width: '100%',
-    aspectRatio: 1,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    backgroundColor: '#F5F0ED',
-  },
-  circleBtn: {
-    position: 'absolute',
-    top: 52,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  circleLeft: { left: 16 },
-  circleRight: { right: 16 },
+    hero: { position: 'relative' },
+    heroImg: {
+      width: '100%',
+      aspectRatio: 1,
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
+      backgroundColor: c.surfaceAlt,
+    },
+    circleBtn: {
+      position: 'absolute',
+      top: 52,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
+    },
+    circleLeft: { left: 16 },
+    circleRight: { right: 16 },
 
-  body: { paddingHorizontal: 24, paddingTop: 24 },
-  meta: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 34,
-    lineHeight: 42,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-  },
+    body: { paddingHorizontal: 24, paddingTop: 24 },
+    meta: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginBottom: 8,
+    },
+    title: {
+      fontSize: 34,
+      lineHeight: 42,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
 
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginTop: 28,
-    marginBottom: 14,
-  },
-  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-    backgroundColor: '#FFFFFF',
-  },
-  tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C9A99A' },
-  tagText: { fontSize: 13, color: '#1A1A1A', fontWeight: '500' },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginTop: 28,
+      marginBottom: 14,
+    },
+    tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    tag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 7,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
+    tagText: { fontSize: 13, color: c.foreground, fontWeight: '500' },
 
-  card: {
-    backgroundColor: '#F5F0ED',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 28,
-    gap: 20,
-  },
-  cardRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
-  cardIcon: { width: 26, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  cardRowText: { flex: 1, gap: 4 },
-  cardRowTitle: { fontSize: 11, fontWeight: '700', color: '#1A1A1A', letterSpacing: 1 },
-  cardRowBody: { fontSize: 14, color: '#6E6862', lineHeight: 21 },
+    card: {
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 20,
+      padding: 20,
+      marginTop: 28,
+      gap: 20,
+    },
+    cardRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+    cardIcon: { width: 26, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+    cardRowText: { flex: 1, gap: 4 },
+    cardRowTitle: { fontSize: 11, fontWeight: '700', color: c.foreground, letterSpacing: 1 },
+    cardRowBody: { fontSize: 14, color: c.muted, lineHeight: 21 },
 
-  ctaWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
-    backgroundColor: 'rgba(250,250,250,0.96)',
-    borderTopWidth: 1,
-    borderTopColor: '#EFEAE6',
-  },
-  cta: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 30,
-    height: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
-});
+    ctaWrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 24,
+      paddingTop: 12,
+      paddingBottom: 32,
+      backgroundColor: c.background,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    cta: {
+      backgroundColor: c.foreground,
+      borderRadius: 30,
+      height: 58,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ctaText: { color: c.onForeground, fontSize: 13, fontWeight: '700', letterSpacing: 2 },
+  });

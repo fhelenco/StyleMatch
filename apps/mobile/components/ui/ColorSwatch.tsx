@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useTheme } from '../../contexts/theme';
 
 interface ColorSwatchProps {
   colors: Array<{ name: string; hex: string }>;
   size?: number;
 }
 
-export function ColorSwatch({ colors, size = 16 }: ColorSwatchProps) {
+export function ColorSwatch({ colors: swatches, size = 16 }: ColorSwatchProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
-      {colors.slice(0, 3).map((color, i) => (
+      {swatches.slice(0, 3).map((color, i) => (
         <View
           key={i}
           style={[
@@ -19,6 +21,7 @@ export function ColorSwatch({ colors, size = 16 }: ColorSwatchProps) {
               height: size,
               borderRadius: size / 2,
               backgroundColor: color.hex,
+              borderColor: colors.surface,
               marginLeft: i > 0 ? -size * 0.3 : 0,
             },
           ]}
@@ -30,5 +33,5 @@ export function ColorSwatch({ colors, size = 16 }: ColorSwatchProps) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  dot: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.8)' },
+  dot: { borderWidth: 1.5 },
 });

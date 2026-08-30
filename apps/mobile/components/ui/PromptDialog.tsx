@@ -1,51 +1,95 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
-import { useThemedStyles } from '../../contexts/theme';
+import React, { useEffect, useState } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
 import type { ThemeColors } from '../../lib/theme';
 
-interface ConfirmDialogProps {
+interface PromptDialogProps {
   visible: boolean;
   title: string;
   message?: string;
+  placeholder?: string;
+  initialValue?: string;
+  maxLength?: number;
   confirmLabel?: string;
   cancelLabel?: string;
-  destructive?: boolean;
-  onConfirm: () => void;
+  saving?: boolean;
   onCancel: () => void;
+  onConfirm: (value: string) => void;
 }
 
 /**
- * In-app confirmation dialog. Unlike Alert.alert / window.confirm, this renders
- * inside the app so it works on native, web, and inside sandboxed previews.
+ * In-app text-input dialog (rename, edit a single field, etc.) — same visual
+ * language as ConfirmDialog, but with a TextInput instead of just a message.
  */
-export function ConfirmDialog({
+export function PromptDialog({
   visible,
   title,
   message,
-  confirmLabel = 'Confirm',
+  placeholder,
+  initialValue = '',
+  maxLength = 50,
+  confirmLabel = 'Save',
   cancelLabel = 'Cancel',
-  destructive = false,
-  onConfirm,
+  saving = false,
   onCancel,
-}: ConfirmDialogProps) {
+  onConfirm,
+}: PromptDialogProps) {
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const [value, setValue] = useState(initialValue);
+
+  // Reset the field to the current value each time the dialog opens.
+  useEffect(() => {
+    if (visible) setValue(initialValue);
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const trimmed = value.trim();
+  const canSave = trimmed.length > 0 && !saving;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.overlay} onPress={onCancel}>
-        {/* Stop presses on the card from closing the dialog */}
         <Pressable style={styles.card} onPress={() => {}}>
           <Text style={styles.title}>{title}</Text>
           {!!message && <Text style={styles.message}>{message}</Text>}
+
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={setValue}
+            placeholder={placeholder}
+            placeholderTextColor={colors.muted}
+            maxLength={maxLength}
+            autoFocus
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!saving}
+          />
+
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.confirmBtn, destructive && styles.confirmBtnDestructive]}
-              onPress={onConfirm}
+              style={[styles.confirmBtn, !canSave && styles.confirmBtnDisabled]}
+              onPress={() => canSave && onConfirm(trimmed)}
               activeOpacity={0.85}
+              disabled={!canSave}
             >
-              <Text style={styles.confirmText}>{confirmLabel}</Text>
+              {saving ? (
+                <ActivityIndicator color={colors.onAccent} size="small" />
+              ) : (
+                <Text style={styles.confirmText}>{confirmLabel}</Text>
+              )}
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -86,6 +130,17 @@ const makeStyles = (c: ThemeColors) =>
       color: c.muted,
       lineHeight: 21,
     },
+    input: {
+      marginTop: 14,
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: c.foreground,
+      borderWidth: 1.5,
+      borderColor: c.border,
+    },
     actions: {
       flexDirection: 'row',
       gap: 12,
@@ -115,8 +170,8 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 12,
       backgroundColor: c.accent,
     },
-    confirmBtnDestructive: {
-      backgroundColor: c.danger,
+    confirmBtnDisabled: {
+      backgroundColor: c.border,
     },
     confirmText: {
       fontSize: 13,

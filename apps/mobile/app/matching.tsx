@@ -14,11 +14,15 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWardrobeStore, ClothingItem } from '../stores/wardrobeStore';
 import { useSuggestOutfits, useSaveOutfit } from '../hooks/useOutfits';
+import { useTheme, useThemedStyles } from '../contexts/theme';
+import type { ThemeColors } from '../lib/theme';
 
 const ROLES = ['FOUNDATION', 'LAYER', 'BASE'] as const;
 
 export default function MatchScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { anchor } = useLocalSearchParams<{ anchor?: string }>();
   const items = useWardrobeStore((s) => s.items);
   const [anchorId, setAnchorId] = useState<string | null>(anchor ?? null);
@@ -54,7 +58,7 @@ export default function MatchScreen() {
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/wardrobe'))}
           hitSlop={12}
         >
-          <Ionicons name="chevron-back" size={24} color="#1A1A1A" />
+          <Ionicons name="chevron-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>StyleMatch</Text>
         <View style={{ width: 24 }} />
@@ -96,7 +100,7 @@ export default function MatchScreen() {
         </View>
       ) : isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C9A99A" />
+          <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Creating your match...</Text>
         </View>
       ) : suggestion ? (
@@ -147,7 +151,7 @@ export default function MatchScreen() {
               disabled={saved || isSaving}
               activeOpacity={0.85}
             >
-              {saved && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
+              {saved && <Ionicons name="checkmark" size={18} color={colors.onAccent} />}
               <Text style={styles.lookbookBtnText}>
                 {isSaving ? 'ADDING…' : saved ? 'ADDED TO LOOKBOOK' : 'ADD TO LOOKBOOK'}
               </Text>
@@ -170,174 +174,175 @@ export default function MatchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#1A1A1A',
-  },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.foreground,
+    },
 
-  // Picker
-  pickerContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  pickerLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginBottom: 8,
-  },
-  pickerSubtitle: {
-    fontSize: 14,
-    color: '#8C8C8C',
-    marginBottom: 20,
-  },
-  pickerGrid: { gap: 12, paddingBottom: 40 },
-  pickerRow: { gap: 12 },
-  pickerItem: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-  },
-  pickerImg: { width: '100%', aspectRatio: 3 / 4 },
-  pickerItemLabel: {
-    fontSize: 12,
-    color: '#1A1A1A',
-    padding: 8,
-    fontWeight: '500',
-  },
+    // Picker
+    pickerContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
+    pickerLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginBottom: 8,
+    },
+    pickerSubtitle: {
+      fontSize: 14,
+      color: c.muted,
+      marginBottom: 20,
+    },
+    pickerGrid: { gap: 12, paddingBottom: 40 },
+    pickerRow: { gap: 12 },
+    pickerItem: {
+      flex: 1,
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    pickerImg: { width: '100%', aspectRatio: 3 / 4 },
+    pickerItemLabel: {
+      fontSize: 12,
+      color: c.foreground,
+      padding: 8,
+      fontWeight: '500',
+    },
 
-  // Loading
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#8C8C8C',
-  },
+    // Loading
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 16,
+    },
+    loadingText: {
+      fontSize: 16,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.muted,
+    },
 
-  // Results
-  results: { padding: 16, paddingBottom: 40, gap: 16 },
+    // Results
+    results: { padding: 16, paddingBottom: 40, gap: 16 },
 
-  scoreContainer: { alignItems: 'center', gap: 8, paddingVertical: 16 },
-  scoreCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#C9A99A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  scoreValue: {
-    fontSize: 40,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#C9A99A',
-  },
-  scorePercent: {
-    fontSize: 20,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#C9A99A',
-    marginTop: 6,
-  },
-  scoreLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 3,
-  },
+    scoreContainer: { alignItems: 'center', gap: 8, paddingVertical: 16 },
+    scoreCircle: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      borderWidth: 3,
+      borderColor: c.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+    },
+    scoreValue: {
+      fontSize: 40,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.accent,
+    },
+    scorePercent: {
+      fontSize: 20,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.accent,
+      marginTop: 6,
+    },
+    scoreLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 3,
+    },
 
-  // Piece cards
-  pieceCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-  },
-  pieceThumb: {
-    width: 100,
-    height: 120,
-    backgroundColor: '#F5F0ED',
-  },
-  pieceImg: { width: '100%', height: '100%' },
-  pieceInfo: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-    gap: 6,
-  },
-  pieceRole: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#C9A99A',
-    letterSpacing: 2,
-  },
-  pieceName: {
-    fontSize: 20,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-  },
+    // Piece cards
+    pieceCard: {
+      flexDirection: 'row',
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    pieceThumb: {
+      width: 100,
+      height: 120,
+      backgroundColor: c.surfaceAlt,
+    },
+    pieceImg: { width: '100%', height: '100%' },
+    pieceInfo: {
+      flex: 1,
+      padding: 16,
+      justifyContent: 'center',
+      gap: 6,
+    },
+    pieceRole: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.accent,
+      letterSpacing: 2,
+    },
+    pieceName: {
+      fontSize: 20,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
 
-  // Citation
-  citation: {
-    backgroundColor: '#F5F0ED',
-    borderRadius: 12,
-    padding: 20,
-  },
-  citationText: {
-    fontSize: 14,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#8C8C8C',
-    lineHeight: 22,
-  },
+    // Citation
+    citation: {
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 12,
+      padding: 20,
+    },
+    citationText: {
+      fontSize: 14,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.muted,
+      lineHeight: 22,
+    },
 
-  // Actions
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  lookbookBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 8,
-    backgroundColor: '#C9A99A',
-  },
-  lookbookBtnSaved: {
-    backgroundColor: '#A07B6F',
-  },
-  lookbookBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
+    // Actions
+    actions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 8,
+    },
+    lookbookBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 16,
+      borderRadius: 8,
+      backgroundColor: c.accent,
+    },
+    lookbookBtnSaved: {
+      backgroundColor: c.accentDark,
+    },
+    lookbookBtnText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: c.onAccent,
+      letterSpacing: 1,
+    },
 
-  tryAnother: { alignItems: 'center', paddingVertical: 8 },
-  tryAnotherText: {
-    fontSize: 14,
-    color: '#C9A99A',
-    fontWeight: '500',
-  },
-});
+    tryAnother: { alignItems: 'center', paddingVertical: 8 },
+    tryAnotherText: {
+      fontSize: 14,
+      color: c.accent,
+      fontWeight: '500',
+    },
+  });

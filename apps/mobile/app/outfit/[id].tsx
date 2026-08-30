@@ -15,17 +15,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useOutfitDetail, useToggleFavorite } from '../../hooks/useOutfits';
 import { MoodBoard } from '../../components/outfits/MoodBoard';
 import { ClothingItem } from '../../stores/wardrobeStore';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export default function OutfitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { data: outfit, isLoading } = useOutfitDetail(id);
   const { mutate: toggleFav } = useToggleFavorite();
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ flex: 1 }} color="#C9A99A" />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.accent} />
       </SafeAreaView>
     );
   }
@@ -51,7 +55,7 @@ export default function OutfitDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color="#1A1A1A" />
+          <Ionicons name="chevron-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Outfit</Text>
         <TouchableOpacity
@@ -61,7 +65,7 @@ export default function OutfitDetailScreen() {
           <Ionicons
             name={outfit.is_favorite ? 'heart' : 'heart-outline'}
             size={24}
-            color="#C9A99A"
+            color={colors.accent}
           />
         </TouchableOpacity>
       </View>
@@ -118,81 +122,82 @@ export default function OutfitDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  scroll: { padding: 16, gap: 16, paddingBottom: 40 },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    headerTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.foreground,
+    },
+    scroll: { padding: 16, gap: 16, paddingBottom: 40 },
 
-  title: {
-    fontSize: 24,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-  },
-  tags: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  tag: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-    backgroundColor: '#FFFFFF',
-  },
-  tagText: {
-    fontSize: 12,
-    color: '#8C8C8C',
-    textTransform: 'lowercase',
-  },
-  description: {
-    fontSize: 14,
-    color: '#8C8C8C',
-    lineHeight: 22,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginTop: 8,
-  },
-  itemsRow: { gap: 12 },
-  itemCard: {
-    width: 100,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-  },
-  itemImg: {
-    width: '100%',
-    height: 100,
-    backgroundColor: '#F5F0ED',
-  },
-  itemLabel: {
-    fontSize: 12,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    padding: 8,
-  },
-  notFound: {
-    fontSize: 16,
-    color: '#8C8C8C',
-    textAlign: 'center',
-    marginTop: 100,
-  },
-});
+    title: {
+      fontSize: 24,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
+    tags: {
+      flexDirection: 'row',
+      gap: 8,
+      flexWrap: 'wrap',
+    },
+    tag: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    tagText: {
+      fontSize: 12,
+      color: c.muted,
+      textTransform: 'lowercase',
+    },
+    description: {
+      fontSize: 14,
+      color: c.muted,
+      lineHeight: 22,
+    },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginTop: 8,
+    },
+    itemsRow: { gap: 12 },
+    itemCard: {
+      width: 100,
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    itemImg: {
+      width: '100%',
+      height: 100,
+      backgroundColor: c.surfaceAlt,
+    },
+    itemLabel: {
+      fontSize: 12,
+      color: c.foreground,
+      fontWeight: '500',
+      padding: 8,
+    },
+    notFound: {
+      fontSize: 16,
+      color: c.muted,
+      textAlign: 'center',
+      marginTop: 100,
+    },
+  });
