@@ -42,6 +42,7 @@ function ThemedApp({ fontsLoaded }: { fontsLoaded: boolean }) {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add-item" options={{ presentation: 'modal' }} />
           <Stack.Screen name="matching" />
+          <Stack.Screen name="occasion-match" />
           <Stack.Screen name="item/[id]" />
           <Stack.Screen name="outfit/[id]" />
         </Stack>

@@ -16,7 +16,16 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { useTheme, useThemedStyles } from '../../contexts/theme';
 import type { ThemeColors } from '../../lib/theme';
 
-const FILTERS = ['All', 'Favorites', 'Work', 'Weekend', 'Date'] as const;
+const FILTERS: Array<{ label: string; value: string }> = [
+  { label: 'All', value: 'All' },
+  { label: 'Favorites', value: 'Favorites' },
+  { label: 'Work', value: 'work' },
+  { label: 'Weekend', value: 'weekend' },
+  { label: 'Date', value: 'date-night' },
+  { label: 'Party', value: 'party' },
+  { label: 'Beach', value: 'beach' },
+  { label: 'Bar', value: 'bar' },
+];
 
 export default function LookbookScreen() {
   const [filter, setFilter] = useState<string>('All');
@@ -26,14 +35,14 @@ export default function LookbookScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const activeFilterLabel = FILTERS.find((f) => f.value === filter)?.label ?? filter;
+
   const filtered =
     filter === 'All'
       ? outfits
       : filter === 'Favorites'
         ? outfits?.filter((o) => o.is_favorite)
-        : outfits?.filter(
-            (o) => o.occasion?.toLowerCase() === filter.toLowerCase()
-          );
+        : outfits?.filter((o) => o.occasion?.toLowerCase() === filter.toLowerCase());
 
   const isEmpty = !outfits || outfits.length === 0;
   const isFilterEmpty = !isEmpty && (!filtered || filtered.length === 0);
@@ -48,7 +57,7 @@ export default function LookbookScreen() {
             subtitle="For your saved looks"
             description="Match your wardrobe pieces to create curated outfits. Your saved looks will appear here."
             ctaLabel={'CREATE\nLOOK'}
-            onCta={() => router.push('/matching')}
+            onCta={() => router.push('/occasion-match')}
           />
         </View>
       ) : (
@@ -64,15 +73,15 @@ export default function LookbookScreen() {
             contentContainerStyle={styles.chips}
           >
             {FILTERS.map((f) => {
-              const active = filter === f;
+              const active = filter === f.value;
               return (
                 <TouchableOpacity
-                  key={f}
+                  key={f.value}
                   style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => setFilter(f)}
+                  onPress={() => setFilter(f.value)}
                   activeOpacity={0.8}
                 >
-                  {f === 'Favorites' && (
+                  {f.label === 'Favorites' && (
                     <Ionicons
                       name="heart"
                       size={13}
@@ -81,7 +90,7 @@ export default function LookbookScreen() {
                     />
                   )}
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                    {f}
+                    {f.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -99,7 +108,7 @@ export default function LookbookScreen() {
               <Text style={styles.filterEmptyText}>
                 {filter === 'Favorites'
                   ? 'No favorites yet. Tap the heart on a look to add it here.'
-                  : `No ${filter.toLowerCase()} looks yet.`}
+                  : `No ${activeFilterLabel.toLowerCase()} looks yet.`}
               </Text>
             </View>
           ) : (
@@ -109,6 +118,18 @@ export default function LookbookScreen() {
           )}
         </ScrollView>
       )}
+
+      {/* Create Look */}
+      <View style={styles.bottomActions}>
+        <TouchableOpacity
+          style={styles.matchBtn}
+          onPress={() => router.push('/occasion-match')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.matchIcon}>✧</Text>
+          <Text style={styles.matchText}>CREATE LOOK</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -116,7 +137,7 @@ export default function LookbookScreen() {
 const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: c.background },
-    scroll: { padding: 16, paddingBottom: 40 },
+    scroll: { padding: 16, paddingBottom: 100 },
     emptyWrap: { flex: 1, padding: 16 },
     title: {
       fontSize: 28,
@@ -168,5 +189,37 @@ const makeStyles = (c: ThemeColors) =>
       color: c.muted,
       textAlign: 'center',
       lineHeight: 21,
+    },
+    bottomActions: {
+      position: 'absolute',
+      bottom: 72,
+      right: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    matchBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.accent,
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+      borderRadius: 28,
+      gap: 6,
+      shadowColor: c.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    matchIcon: {
+      fontSize: 16,
+      color: c.onAccent,
+    },
+    matchText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: c.onAccent,
+      letterSpacing: 1,
     },
   });
