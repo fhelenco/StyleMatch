@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import wardrobeRouter from './routes/wardrobe';
 import outfitsRouter from './routes/outfits';
 import calendarRouter from './routes/calendar';
+import profileRouter from './routes/profile';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -43,6 +44,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/wardrobe', wardrobeRouter);
 app.use('/api/outfits', outfitsRouter);
 app.use('/api/calendar', calendarRouter);
+app.use('/api/profile', profileRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });

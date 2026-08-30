@@ -83,15 +83,57 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { data, error } = await adminSupabase
+    const { data: outfits, error } = await adminSupabase
       .from('outfits')
       .select('*')
       .eq('user_id', req.userId!)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    res.json(data);
+    if (!outfits || outfits.length === 0) {
+      res.json([]);
+      return;
+    }
+
+    // Batch-attach each outfit's pieces (same shape as GET /:id) so the
+    // lookbook list can show a real piece count and preview thumbnails
+    // instead of always reading 0 pieces.
+    const outfitIds = outfits.map((o) => o.id);
+    const { data: junctionRows } = await adminSupabase
+      .from('outfit_items')
+      .select('outfit_id, clothing_item_id')
+      .in('outfit_id', outfitIds);
+
+    const itemIds = Array.from(
+      new Set((junctionRows || []).map((r) => r.clothing_item_id))
+    );
+
+    let itemsById = new Map<string, unknown>();
+    if (itemIds.length > 0) {
+      const { data: clothingItems } = await adminSupabase
+        .from('clothing_items')
+        .select('*')
+        .in('id', itemIds);
+      itemsById = new Map((clothingItems || []).map((item) => [item.id, item]));
+    }
+
+    const itemsByOutfit = new Map<string, unknown[]>();
+    for (const row of junctionRows || []) {
+      const item = itemsById.get(row.clothing_item_id);
+      if (!item) continue;
+      const list = itemsByOutfit.get(row.outfit_id) || [];
+      list.push(item);
+      itemsByOutfit.set(row.outfit_id, list);
+    }
+
+    const withItems = outfits.map((outfit) => ({
+      ...outfit,
+      items: itemsByOutfit.get(outfit.id) || [],
+    }));
+
+    res.json(withItems);
   } catch (err) {
+    console.error('list outfits error:', err);
     res.status(500).json({ error: 'Failed to fetch outfits' });
   }
 });
