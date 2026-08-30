@@ -211,7 +211,7 @@ export default function WardrobeScreen() {
       <View style={styles.bottomActions}>
         <TouchableOpacity
           style={styles.matchBtn}
-          onPress={() => router.push('/match')}
+          onPress={() => router.push('/matching')}
           activeOpacity={0.85}
         >
           <Text style={styles.matchIcon}>✧</Text>

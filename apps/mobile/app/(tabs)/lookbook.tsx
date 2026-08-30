@@ -48,7 +48,7 @@ export default function LookbookScreen() {
             subtitle="For your saved looks"
             description="Match your wardrobe pieces to create curated outfits. Your saved looks will appear here."
             ctaLabel={'CREATE\nLOOK'}
-            onCta={() => router.push('/match')}
+            onCta={() => router.push('/matching')}
           />
         </View>
       ) : (
