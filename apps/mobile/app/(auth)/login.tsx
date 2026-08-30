@@ -11,10 +11,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 type Tab = 'login' | 'register';
 
 export default function AuthScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -92,7 +96,7 @@ export default function AuthScreen() {
             <TextInput
               style={inputStyle}
               placeholder="Full Name"
-              placeholderTextColor="#8C8C8C"
+              placeholderTextColor={colors.muted}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
@@ -101,7 +105,7 @@ export default function AuthScreen() {
           <TextInput
             style={inputStyle}
             placeholder="Email"
-            placeholderTextColor="#8C8C8C"
+            placeholderTextColor={colors.muted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -110,7 +114,7 @@ export default function AuthScreen() {
           <TextInput
             style={inputStyle}
             placeholder="Password"
-            placeholderTextColor="#8C8C8C"
+            placeholderTextColor={colors.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -119,7 +123,7 @@ export default function AuthScreen() {
             <TextInput
               style={inputStyle}
               placeholder="Confirm Password"
-              placeholderTextColor="#8C8C8C"
+              placeholderTextColor={colors.muted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -163,64 +167,65 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40, gap: 0 },
-  wordmark: { fontSize: 36, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
-  tagline: { fontSize: 15, color: '#8C8C8C', textAlign: 'center', marginTop: 8, marginBottom: 32 },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40, gap: 0 },
+    wordmark: { fontSize: 36, fontWeight: '700', color: c.foreground, textAlign: 'center' },
+    tagline: { fontSize: 15, color: c.muted, textAlign: 'center', marginTop: 8, marginBottom: 32 },
 
-  tabRow: { flexDirection: 'row', gap: 24, marginBottom: 24 },
-  tabBtn: {
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabBtnActive: { borderBottomColor: '#1A1A1A' },
-  tabLabel: { fontSize: 15, fontWeight: '600', color: '#8C8C8C' },
-  tabLabelActive: { color: '#1A1A1A' },
+    tabRow: { flexDirection: 'row', gap: 24, marginBottom: 24 },
+    tabBtn: {
+      paddingBottom: 8,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    tabBtnActive: { borderBottomColor: c.foreground },
+    tabLabel: { fontSize: 15, fontWeight: '600', color: c.muted },
+    tabLabelActive: { color: c.foreground },
 
-  form: { gap: 12 },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E8E2DE',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#1A1A1A',
-  },
-  ctaButton: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  ctaDisabled: { opacity: 0.4 },
-  ctaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+    form: { gap: 12 },
+    input: {
+      backgroundColor: c.inputBg,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 15,
+      color: c.foreground,
+    },
+    ctaButton: {
+      backgroundColor: c.foreground,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    ctaDisabled: { opacity: 0.4 },
+    ctaText: { color: c.onForeground, fontSize: 15, fontWeight: '600' },
 
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 24 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E8E2DE' },
-  dividerText: { fontSize: 12, color: '#8C8C8C' },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 24 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: c.border },
+    dividerText: { fontSize: 12, color: c.muted },
 
-  socialRow: { flexDirection: 'row', gap: 12 },
-  socialBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: '#E8E2DE',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  socialLabel: { fontSize: 15, color: '#1A1A1A', fontWeight: '500' },
+    socialRow: { flexDirection: 'row', gap: 12 },
+    socialBtn: {
+      flex: 1,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      backgroundColor: c.surface,
+    },
+    socialLabel: { fontSize: 15, color: c.foreground, fontWeight: '500' },
 
-  legal: {
-    fontSize: 11,
-    color: '#8C8C8C',
-    textAlign: 'center',
-    marginTop: 20,
-    lineHeight: 16,
-  },
-});
+    legal: {
+      fontSize: 11,
+      color: c.muted,
+      textAlign: 'center',
+      marginTop: 20,
+      lineHeight: 16,
+    },
+  });

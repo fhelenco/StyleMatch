@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { Modal, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export interface ActionSheetOption {
   label: string;
@@ -21,6 +23,8 @@ interface ActionSheetProps {
  * it works on native, web, and inside sandboxed previews.
  */
 export function ActionSheet({ visible, title, options, onClose }: ActionSheetProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -37,7 +41,7 @@ export function ActionSheet({ visible, title, options, onClose }: ActionSheetPro
                 <Ionicons
                   name={opt.icon}
                   size={20}
-                  color={opt.destructive ? '#B4483C' : '#1A1A1A'}
+                  color={opt.destructive ? colors.danger : colors.foreground}
                 />
               )}
               <Text style={[styles.rowText, opt.destructive && styles.rowTextDestructive]}>
@@ -55,62 +59,63 @@ export function ActionSheet({ visible, title, options, onClose }: ActionSheetPro
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(26,26,26,0.45)',
-    justifyContent: 'flex-end',
-    padding: 12,
-  },
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 6,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  title: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-  },
-  rowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: '#F0EBE7',
-  },
-  rowText: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
-  },
-  rowTextDestructive: {
-    color: '#B4483C',
-  },
-  cancel: {
-    marginTop: 6,
-    paddingVertical: 18,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F0EBE7',
-  },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#8C8C8C',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: 'flex-end',
+      padding: 12,
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      paddingVertical: 6,
+      marginBottom: 8,
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+    },
+    title: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      paddingVertical: 12,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingVertical: 18,
+      paddingHorizontal: 24,
+    },
+    rowBorder: {
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    rowText: {
+      fontSize: 16,
+      color: c.foreground,
+      fontWeight: '500',
+    },
+    rowTextDestructive: {
+      color: c.danger,
+    },
+    cancel: {
+      marginTop: 6,
+      paddingVertical: 18,
+      alignItems: 'center',
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    cancelText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.muted,
+    },
+  });

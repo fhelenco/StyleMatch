@@ -13,6 +13,8 @@ import { useSavedOutfits } from '../../hooks/useOutfits';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
 import { LookCard } from '../../components/lookbook/LookCard';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 const FILTERS = ['All', 'Favorites', 'Work', 'Weekend', 'Date'] as const;
 
@@ -21,6 +23,8 @@ export default function LookbookScreen() {
   const { data: outfits } = useSavedOutfits();
   const items = useWardrobeStore((s) => s.items);
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const filtered =
     filter === 'All'
@@ -72,7 +76,7 @@ export default function LookbookScreen() {
                     <Ionicons
                       name="heart"
                       size={13}
-                      color={active ? '#FFFFFF' : '#C9A99A'}
+                      color={active ? colors.onForeground : colors.accent}
                       style={{ marginRight: 5 }}
                     />
                   )}
@@ -90,7 +94,7 @@ export default function LookbookScreen() {
               <Ionicons
                 name={filter === 'Favorites' ? 'heart-outline' : 'albums-outline'}
                 size={30}
-                color="#C9A99A"
+                color={colors.accent}
               />
               <Text style={styles.filterEmptyText}>
                 {filter === 'Favorites'
@@ -109,59 +113,60 @@ export default function LookbookScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scroll: { padding: 16, paddingBottom: 40 },
-  emptyWrap: { flex: 1, padding: 16 },
-  title: {
-    fontSize: 28,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#8C8C8C',
-    marginBottom: 16,
-  },
-  chipsScroll: { flexGrow: 0, marginBottom: 20 },
-  chips: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-  },
-  chipActive: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#1A1A1A',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#1A1A1A',
-  },
-  chipTextActive: {
-    color: '#FFFFFF',
-  },
-  filterEmpty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingTop: 80,
-    gap: 12,
-  },
-  filterEmptyText: {
-    fontSize: 14,
-    color: '#8C8C8C',
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scroll: { padding: 16, paddingBottom: 40 },
+    emptyWrap: { flex: 1, padding: 16 },
+    title: {
+      fontSize: 28,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: c.muted,
+      marginBottom: 16,
+    },
+    chipsScroll: { flexGrow: 0, marginBottom: 20 },
+    chips: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    chipActive: {
+      backgroundColor: c.foreground,
+      borderColor: c.foreground,
+    },
+    chipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: c.foreground,
+    },
+    chipTextActive: {
+      color: c.onForeground,
+    },
+    filterEmpty: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 40,
+      paddingTop: 80,
+      gap: 12,
+    },
+    filterEmptyText: {
+      fontSize: 14,
+      color: c.muted,
+      textAlign: 'center',
+      lineHeight: 21,
+    },
+  });

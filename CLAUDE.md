@@ -27,6 +27,29 @@ Known-good model IDs, cheapest to most capable:
 
 If you switch models, **verify both call sites still return valid JSON** — the prompts (`backend/src/prompts/garmentAnalysis.ts`, `backend/src/prompts/outfitSuggestions.ts`) demand JSON-only output with no markdown fences, and `claudeService.ts` strips ` ```json ` fences defensively before `JSON.parse`. A weaker model may need a stricter prompt or a retry/repair step.
 
+## User profile (avatar, username, preferences)
+
+The Supabase `profiles` table (`id`, `username`, `avatar_url`, `preferred_language`, `preferred_theme`, `created_at`) is auto-populated per user on signup (one row per `auth.users` id) but isn't auto-wired to anything — it has to be read/written explicitly.
+
+**Backend:** [`backend/src/routes/profile.ts`](backend/src/routes/profile.ts), mounted at `/api/profile`.
+- `GET /api/profile` — fetch the caller's row
+- `PATCH /api/profile` — update `username` / `preferred_language` / `preferred_theme`
+- `POST /api/profile/avatar` (multipart `image`) — resizes, uploads to the **same** `wardrobe-images` Supabase Storage bucket used for clothing photos, at `{userId}/avatar.jpg` (fixed filename — re-uploading overwrites in place), then saves the public URL to `avatar_url`
+- `DELETE /api/profile/avatar` — clears `avatar_url` only. **Known gap:** it does not delete the underlying file from Storage, so old avatars become orphaned (harmless — the next upload overwrites the same path — but worth fixing with a `deleteFromStorage` call if it ever matters).
+
+**Mobile:** [`hooks/useProfile.ts`](apps/mobile/hooks/useProfile.ts) wraps the above as React Query hooks (`useProfile`, `useUpdateProfile`, `useUploadAvatar`, `useRemoveAvatar`), used in [`app/(tabs)/profile.tsx`](apps/mobile/app/(tabs)/profile.tsx). `stores/profileStore.ts` is **just a local cache** (AsyncStorage) so the avatar paints instantly on launch — the database is the source of truth, not the store.
+
+Editing the username uses a reusable [`components/ui/PromptDialog.tsx`](apps/mobile/components/ui/PromptDialog.tsx) (text-input modal, same visual language as `ConfirmDialog`) — triggered from the pencil icon next to the name and from "Edit profile" in Account settings.
+
+## Theming (light / dark)
+
+Every screen and component is themed through a colour-token layer — **there are no hard-coded hex values in components** (the only exceptions are colour drawn *over the hero photo* and the garment placeholder swatches in `home.tsx`).
+
+- **Tokens:** [`lib/theme.ts`](apps/mobile/lib/theme.ts) — `lightColors` / `darkColors` (`ThemeColors`). Dark is warm near-black (`#141110`), not pure black. Add a token here rather than hard-coding.
+- **Context:** [`contexts/theme.tsx`](apps/mobile/contexts/theme.tsx) — `<ThemeProvider>` (mounted in `app/_layout.tsx` under `QueryClientProvider`). `useTheme()` → `{ colors, scheme, mode, setMode }`. `useThemedStyles(makeStyles)` builds a themed StyleSheet, memoised per palette.
+- **Pattern in a file:** `const styles = useThemedStyles(makeStyles)` in the component; `const makeStyles = (c: ThemeColors) => StyleSheet.create({ ... c.foreground ... })` at the bottom. Inline colours (`Ionicons color=`, `placeholderTextColor`, gradient stops) come from `useTheme().colors`.
+- **Source of truth:** `profiles.preferred_theme` (`system` | `light` | `dark`) via `useUpdateProfile`. [`stores/themeStore.ts`](apps/mobile/stores/themeStore.ts) is a local AsyncStorage cache so the right theme paints on launch; `ThemeProvider` reconciles the two and calls `Appearance.setColorScheme()` so native surfaces (Alert, ActionSheet) follow. The Theme segmented control in `app/(tabs)/profile.tsx` calls `setMode`.
+
 ## Local development
 
 **Backend:** `cd backend && npm run dev` — listens on `PORT` (default 3001), binds all interfaces so it's reachable from a phone on the same LAN.
@@ -39,3 +62,4 @@ If you switch models, **verify both call sites still return valid JSON** — the
 ## Notes
 - `.env` files (mobile and backend) hold real secrets (Supabase service role key, Anthropic API key) — never commit them; both are gitignored.
 - Background removal on wardrobe photos uses `@imgly/background-removal-node` (in `backend/src/services/imageService.ts`), flattened onto an off-white backdrop — separate from the Claude model config above.
+- The stack screen for outfit matching is `app/matching.tsx` (renamed from `match.tsx`) — link to it as `/matching`, not `/match`. It accepts an optional `?anchor=<itemId>` param to pre-select a wardrobe piece (used by the item-detail screen's "Create Outfit" button).

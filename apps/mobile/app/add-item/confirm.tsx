@@ -16,8 +16,12 @@ import { apiRequest } from '../../lib/api';
 import { ColorSwatch } from '../../components/ui/ColorSwatch';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export default function ConfirmScreen() {
+  const { colors: palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{ data: string; imageUri: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -94,10 +98,10 @@ export default function ConfirmScreen() {
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/add-item/capture'))}
             hitSlop={8}
           >
-            <Ionicons name="chevron-back" size={20} color="#1A1A1A" />
+            <Ionicons name="chevron-back" size={20} color={palette.foreground} />
           </TouchableOpacity>
           <View style={[styles.circleBtn, styles.circleRight]}>
-            <Ionicons name="sparkles" size={16} color="#C9A99A" />
+            <Ionicons name="sparkles" size={16} color={palette.accent} />
           </View>
         </View>
 
@@ -110,7 +114,7 @@ export default function ConfirmScreen() {
             value={label}
             onChangeText={setLabel}
             placeholder="Name this piece"
-            placeholderTextColor="#C9C2BC"
+            placeholderTextColor={palette.muted}
             multiline
           />
           {!!initial.brand && <Text style={styles.brand}>by {initial.brand}</Text>}
@@ -135,7 +139,7 @@ export default function ConfirmScreen() {
             {!!initial.fabric_care && (
               <View style={styles.cardRow}>
                 <View style={styles.cardIcon}>
-                  <Ionicons name="water-outline" size={18} color="#A07B6F" />
+                  <Ionicons name="water-outline" size={18} color={palette.accentDark} />
                 </View>
                 <View style={styles.cardRowText}>
                   <Text style={styles.cardRowTitle}>FABRIC CARE</Text>
@@ -147,7 +151,7 @@ export default function ConfirmScreen() {
             {!!initial.fabric && (
               <View style={styles.cardRow}>
                 <View style={styles.cardIcon}>
-                  <Ionicons name="pricetag-outline" size={18} color="#A07B6F" />
+                  <Ionicons name="pricetag-outline" size={18} color={palette.accentDark} />
                 </View>
                 <View style={styles.cardRowText}>
                   <Text style={styles.cardRowTitle}>MATERIAL</Text>
@@ -182,7 +186,7 @@ export default function ConfirmScreen() {
           activeOpacity={0.85}
         >
           {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={palette.onForeground} />
           ) : (
             <Text style={styles.ctaText}>SAVE TO WARDROBE</Text>
           )}
@@ -197,127 +201,128 @@ function cap(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scroll: { paddingBottom: 120 },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scroll: { paddingBottom: 120 },
 
-  hero: { position: 'relative' },
-  heroImg: {
-    width: '100%',
-    aspectRatio: 1,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    backgroundColor: '#F5F0ED',
-  },
-  heroPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  circleBtn: {
-    position: 'absolute',
-    top: 52,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  circleLeft: { left: 16 },
-  circleRight: { right: 16 },
+    hero: { position: 'relative' },
+    heroImg: {
+      width: '100%',
+      aspectRatio: 3 / 4,
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
+      backgroundColor: c.surfaceAlt,
+    },
+    heroPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+    circleBtn: {
+      position: 'absolute',
+      top: 52,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 3,
+    },
+    circleLeft: { left: 16 },
+    circleRight: { right: 16 },
 
-  body: { paddingHorizontal: 24, paddingTop: 24 },
-  meta: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 34,
-    lineHeight: 42,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-    padding: 0,
-  },
-  brand: {
-    fontSize: 14,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#A07B6F',
-    marginTop: 2,
-  },
+    body: { paddingHorizontal: 24, paddingTop: 24 },
+    meta: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginBottom: 8,
+    },
+    title: {
+      fontSize: 34,
+      lineHeight: 42,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+      padding: 0,
+    },
+    brand: {
+      fontSize: 14,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.accentDark,
+      marginTop: 2,
+    },
 
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8C8C8C',
-    letterSpacing: 2,
-    marginTop: 28,
-    marginBottom: 14,
-  },
-  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-    backgroundColor: '#FFFFFF',
-  },
-  tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C9A99A' },
-  tagText: { fontSize: 13, color: '#1A1A1A', fontWeight: '500' },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.muted,
+      letterSpacing: 2,
+      marginTop: 28,
+      marginBottom: 14,
+    },
+    tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    tag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 7,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
+    tagText: { fontSize: 13, color: c.foreground, fontWeight: '500' },
 
-  card: {
-    backgroundColor: '#F5F0ED',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 28,
-    gap: 20,
-  },
-  cardRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
-  cardIcon: {
-    width: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  cardRowText: { flex: 1, gap: 4 },
-  cardRowTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    letterSpacing: 1,
-  },
-  cardRowBody: {
-    fontSize: 14,
-    color: '#6E6862',
-    lineHeight: 21,
-  },
+    card: {
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 20,
+      padding: 20,
+      marginTop: 28,
+      gap: 20,
+    },
+    cardRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+    cardIcon: {
+      width: 26,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 2,
+    },
+    cardRowText: { flex: 1, gap: 4 },
+    cardRowTitle: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: c.foreground,
+      letterSpacing: 1,
+    },
+    cardRowBody: {
+      fontSize: 14,
+      color: c.muted,
+      lineHeight: 21,
+    },
 
-  ctaWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 32,
-    backgroundColor: 'rgba(250,250,250,0.96)',
-    borderTopWidth: 1,
-    borderTopColor: '#EFEAE6',
-  },
-  cta: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 30,
-    height: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
-});
+    ctaWrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 24,
+      paddingTop: 12,
+      paddingBottom: 32,
+      backgroundColor: c.background,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    cta: {
+      backgroundColor: c.foreground,
+      borderRadius: 30,
+      height: 58,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ctaText: { color: c.onForeground, fontSize: 13, fontWeight: '700', letterSpacing: 2 },
+  });

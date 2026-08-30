@@ -10,6 +10,8 @@ import {
 import { useRouter } from 'expo-router';
 import { ClothingCard } from './ClothingCard';
 import { ClothingItem } from '../../stores/wardrobeStore';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 interface WardrobeGridProps {
   items: ClothingItem[];
@@ -26,6 +28,8 @@ function getColumns(width: number): number {
 export function WardrobeGrid({ items, loading }: WardrobeGridProps) {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const numCols = getColumns(width);
   const gap = 10;
   const padding = 16;
@@ -34,7 +38,7 @@ export function WardrobeGrid({ items, loading }: WardrobeGridProps) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#C9A99A" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -68,8 +72,9 @@ export function WardrobeGrid({ items, loading }: WardrobeGridProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  emptyTitle: { fontSize: 18, color: '#1A1A1A', fontWeight: '600' },
-  emptySubtitle: { fontSize: 14, color: '#8C8C8C' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+    emptyTitle: { fontSize: 18, color: c.foreground, fontWeight: '600' },
+    emptySubtitle: { fontSize: 14, color: c.muted },
+  });

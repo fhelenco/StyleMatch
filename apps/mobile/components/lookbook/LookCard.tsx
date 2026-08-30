@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { MoodBoard } from '../outfits/MoodBoard';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { useToggleFavorite, useDeleteOutfit, SavedOutfit } from '../../hooks/useOutfits';
 import { ClothingItem } from '../../stores/wardrobeStore';
+import { useTheme, useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 interface LookCardProps {
   outfit: SavedOutfit;
@@ -14,6 +15,8 @@ interface LookCardProps {
 
 export function LookCard({ outfit, items }: LookCardProps) {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { mutate: toggleFav } = useToggleFavorite();
   const { mutate: deleteOutfit } = useDeleteOutfit();
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -35,8 +38,6 @@ export function LookCard({ outfit, items }: LookCardProps) {
       onPress={() => router.push(`/outfit/${outfit.id}`)}
       activeOpacity={0.9}
     >
-      <MoodBoard items={outfitItems} square />
-
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text style={styles.vibe} numberOfLines={1}>
@@ -47,11 +48,11 @@ export function LookCard({ outfit, items }: LookCardProps) {
               <Ionicons
                 name={outfit.is_favorite ? 'heart' : 'heart-outline'}
                 size={20}
-                color={outfit.is_favorite ? '#C9A99A' : '#8C8C8C'}
+                color={outfit.is_favorite ? colors.accent : colors.muted}
               />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setConfirmVisible(true)} hitSlop={8}>
-              <Ionicons name="trash-outline" size={19} color="#8C8C8C" />
+              <Ionicons name="trash-outline" size={19} color={colors.muted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -80,38 +81,39 @@ export function LookCard({ outfit, items }: LookCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E8E2DE',
-    marginBottom: 16,
-  },
-  body: {
-    padding: 16,
-    gap: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  vibe: {
-    fontSize: 18,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    color: '#1A1A1A',
-    flex: 1,
-    marginRight: 8,
-  },
-  meta: {
-    fontSize: 13,
-    color: '#8C8C8C',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: c.border,
+      marginBottom: 16,
+    },
+    body: {
+      padding: 16,
+      gap: 4,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
+    vibe: {
+      fontSize: 18,
+      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      color: c.foreground,
+      flex: 1,
+      marginRight: 8,
+    },
+    meta: {
+      fontSize: 13,
+      color: c.muted,
+    },
+  });

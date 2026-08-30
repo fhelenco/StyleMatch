@@ -1,5 +1,7 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 const CATEGORIES = ['all', 'tops', 'bottoms', 'shoes', 'accessories', 'outerwear'] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -19,6 +21,7 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScrollView
       horizontal
@@ -45,20 +48,21 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  // flexGrow:0 keeps the horizontal row from stretching to fill the column,
-  // alignItems:center stops each chip from being stretched to the row height.
-  scroll: { flexGrow: 0, flexShrink: 0 },
-  container: { paddingHorizontal: 16, gap: 8, paddingVertical: 8, alignItems: 'center' },
-  chip: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E8E2DE',
-    backgroundColor: '#FFFFFF',
-  },
-  chipActive: { backgroundColor: '#1A1A1A', borderColor: '#1A1A1A' },
-  label: { fontSize: 13, color: '#8C8C8C', fontWeight: '500' },
-  labelActive: { color: '#FFFFFF', fontWeight: '600' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    // flexGrow:0 keeps the horizontal row from stretching to fill the column,
+    // alignItems:center stops each chip from being stretched to the row height.
+    scroll: { flexGrow: 0, flexShrink: 0 },
+    container: { paddingHorizontal: 16, gap: 8, paddingVertical: 8, alignItems: 'center' },
+    chip: {
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 24,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    chipActive: { backgroundColor: c.foreground, borderColor: c.foreground },
+    label: { fontSize: 13, color: c.muted, fontWeight: '500' },
+    labelActive: { color: c.onForeground, fontWeight: '600' },
+  });

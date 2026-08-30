@@ -8,6 +8,8 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
+import { useThemedStyles } from '../../contexts/theme';
+import type { ThemeColors } from '../../lib/theme';
 
 export type SortOption = 'recent' | 'most-worn' | 'az';
 
@@ -53,6 +55,7 @@ export function FilterSheet({
   onApply,
   onClose,
 }: FilterSheetProps) {
+  const styles = useThemedStyles(makeStyles);
   const [seasons, setSeasons] = useState<string[]>(value.seasons);
   const [styles_, setStyles] = useState<string[]>(value.styles);
   const [sort, setSort] = useState<SortOption>(value.sort);
@@ -159,85 +162,86 @@ export function FilterSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(26,26,26,0.35)',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 12,
-    paddingTop: 96,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    maxHeight: '82%',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#1A1A1A',
-  },
-  clear: {
-    fontSize: 15,
-    color: '#C9A99A',
-    fontWeight: '600',
-  },
-  section: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#8C8C8C',
-    letterSpacing: 1.5,
-    marginTop: 20,
-    marginBottom: 12,
-  },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  chip: {
-    paddingHorizontal: 18,
-    paddingVertical: 11,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E8E2DE',
-    backgroundColor: '#FFFFFF',
-  },
-  chipActive: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#1A1A1A',
-  },
-  chipText: {
-    fontSize: 14,
-    color: '#1A1A1A',
-    fontWeight: '500',
-  },
-  chipTextActive: {
-    color: '#FFFFFF',
-  },
-  apply: {
-    marginTop: 24,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-  },
-  applyText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: 'flex-start',
+      paddingHorizontal: 12,
+      paddingTop: 96,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 24,
+      padding: 24,
+      maxHeight: '82%',
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 28,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 10,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    title: {
+      fontSize: 26,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
+    clear: {
+      fontSize: 15,
+      color: c.accent,
+      fontWeight: '600',
+    },
+    section: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.muted,
+      letterSpacing: 1.5,
+      marginTop: 20,
+      marginBottom: 12,
+    },
+    chipWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    chip: {
+      paddingHorizontal: 18,
+      paddingVertical: 11,
+      borderRadius: 24,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    chipActive: {
+      backgroundColor: c.foreground,
+      borderColor: c.foreground,
+    },
+    chipText: {
+      fontSize: 14,
+      color: c.foreground,
+      fontWeight: '500',
+    },
+    chipTextActive: {
+      color: c.onForeground,
+    },
+    apply: {
+      marginTop: 24,
+      backgroundColor: c.foreground,
+      borderRadius: 16,
+      paddingVertical: 18,
+      alignItems: 'center',
+    },
+    applyText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.onForeground,
+      letterSpacing: 0.5,
+    },
+  });

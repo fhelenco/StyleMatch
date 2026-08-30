@@ -39,7 +39,15 @@
         }
       ],
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "StyleMatch needs photo access to save your style card.",
+          "savePhotosPermission": "StyleMatch saves your Aesthetic DNA card to your Photos.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
