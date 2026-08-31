@@ -306,10 +306,19 @@ function buildTags(item: ClothingItem): string[] {
 
 function seasonTag(season?: string) {
   switch (season) {
+    // Legacy grouped values from before the season field was split into four.
     case 'spring-summer':
       return 'Spring/Summer';
     case 'fall-winter':
       return 'Fall/Winter';
+    case 'spring':
+      return 'Spring';
+    case 'summer':
+      return 'Summer';
+    case 'fall':
+      return 'Fall';
+    case 'winter':
+      return 'Winter';
     case 'all-season':
       return 'All-Season';
     default:
@@ -320,9 +329,15 @@ function seasonTag(season?: string) {
 function collectionLabel(season?: string) {
   switch (season) {
     case 'spring-summer':
+    case 'spring':
       return 'Spring Collection';
+    case 'summer':
+      return 'Summer Collection';
     case 'fall-winter':
+    case 'fall':
       return 'Fall Collection';
+    case 'winter':
+      return 'Winter Collection';
     case 'all-season':
       return 'Core Collection';
     default:

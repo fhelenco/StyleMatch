@@ -22,10 +22,28 @@ export interface WardrobeFilters {
 export const DEFAULT_FILTERS: WardrobeFilters = { seasons: [], styles: [], sort: 'recent' };
 
 const SEASONS: Array<{ label: string; value: string }> = [
-  { label: 'Spring / Summer', value: 'spring-summer' },
-  { label: 'Fall / Winter', value: 'fall-winter' },
+  { label: 'Spring', value: 'spring' },
+  { label: 'Summer', value: 'summer' },
+  { label: 'Fall', value: 'fall' },
+  { label: 'Winter', value: 'winter' },
   { label: 'All-Season', value: 'all-season' },
 ];
+
+// Items saved before the season field was split into four still carry the
+// old grouped values ('spring-summer', 'fall-winter') — match those too so
+// picking "Summer" or "Winter" doesn't hide pre-existing wardrobe pieces.
+const LEGACY_SEASON_MATCHES: Record<string, string[]> = {
+  spring: ['spring', 'spring-summer'],
+  summer: ['summer', 'spring-summer'],
+  fall: ['fall', 'fall-winter'],
+  winter: ['winter', 'fall-winter'],
+  'all-season': ['all-season'],
+};
+
+export function seasonMatches(selectedValue: string, itemSeason?: string | null): boolean {
+  if (!itemSeason) return false;
+  return (LEGACY_SEASON_MATCHES[selectedValue] ?? [selectedValue]).includes(itemSeason);
+}
 
 const SORTS: Array<{ label: string; value: SortOption }> = [
   { label: 'Recent', value: 'recent' },

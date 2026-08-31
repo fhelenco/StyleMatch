@@ -21,6 +21,7 @@ import { useTheme, useThemedStyles } from '../contexts/theme';
 import type { ThemeColors } from '../lib/theme';
 
 const OCCASIONS: Array<{ label: string; value: string }> = [
+  { label: 'Casual', value: 'casual' },
   { label: 'Work', value: 'work' },
   { label: 'Party', value: 'party' },
   { label: 'Date', value: 'date-night' },
@@ -32,8 +33,10 @@ const OCCASIONS: Array<{ label: string; value: string }> = [
 ];
 
 const SEASONS: Array<{ label: string; value: string }> = [
-  { label: 'Summer', value: 'spring-summer' },
-  { label: 'Winter', value: 'fall-winter' },
+  { label: 'Spring', value: 'spring' },
+  { label: 'Summer', value: 'summer' },
+  { label: 'Fall', value: 'fall' },
+  { label: 'Winter', value: 'winter' },
   { label: 'All-Season', value: 'all-season' },
 ];
 
@@ -52,8 +55,10 @@ export default function OccasionMatchScreen() {
   const { width } = useWindowDimensions();
   const items = useWardrobeStore((s) => s.items);
 
+  const [step, setStep] = useState<'vibe' | 'base'>('vibe');
   const [occasion, setOccasion] = useState<string | null>(null);
   const [season, setSeason] = useState<string | null>(null);
+  const [anchorId, setAnchorId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const lastIndex = useRef(0);
@@ -70,7 +75,7 @@ export default function OccasionMatchScreen() {
     if (!occasion) return;
     setActiveIndex(0);
     setSaved(false);
-    generate({ occasion, season: season ?? undefined });
+    generate({ occasion, season: season ?? undefined, anchor_item_id: anchorId ?? undefined });
   };
 
   const handleReset = () => {
@@ -78,6 +83,19 @@ export default function OccasionMatchScreen() {
     setActiveIndex(0);
     setSaved(false);
     lastIndex.current = 0;
+  };
+
+  const handleBack = () => {
+    if (suggestions) {
+      handleReset();
+      return;
+    }
+    if (step === 'base') {
+      setStep('vibe');
+      return;
+    }
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/lookbook');
   };
 
   const handleSave = () => {
@@ -155,16 +173,7 @@ export default function OccasionMatchScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() =>
-            suggestions
-              ? handleReset()
-              : router.canGoBack()
-                ? router.back()
-                : router.replace('/(tabs)/lookbook')
-          }
-          hitSlop={12}
-        >
+        <TouchableOpacity onPress={handleBack} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Look</Text>
@@ -177,8 +186,8 @@ export default function OccasionMatchScreen() {
             <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loadingText}>Creating your look...</Text>
           </View>
-        ) : (
-          /* Picker state */
+        ) : step === 'vibe' ? (
+          /* Step 1 — occasion + season */
           <ScrollView
             contentContainerStyle={styles.pickerContainer}
             showsVerticalScrollIndicator={false}
@@ -225,13 +234,65 @@ export default function OccasionMatchScreen() {
 
             <TouchableOpacity
               style={[styles.generateBtn, !occasion && styles.generateBtnDisabled]}
-              onPress={handleGenerate}
+              onPress={() => setStep('base')}
               disabled={!occasion}
               activeOpacity={0.85}
             >
-              <Text style={styles.generateBtnText}>GENERATE LOOK</Text>
+              <Text style={styles.generateBtnText}>NEXT</Text>
             </TouchableOpacity>
           </ScrollView>
+        ) : (
+          /* Step 2 — optional base piece */
+          <View style={{ flex: 1 }}>
+            <View style={styles.pickerHeaderPad}>
+              <Text style={styles.pickerLabel}>BASE PIECE</Text>
+              <Text style={styles.pickerSubtitle}>
+                Optional — build the look around one of your pieces
+              </Text>
+            </View>
+            <FlatList
+              data={items}
+              numColumns={3}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.baseGrid}
+              columnWrapperStyle={styles.baseRow}
+              renderItem={({ item }) => {
+                const active = anchorId === item.id;
+                return (
+                  <TouchableOpacity
+                    onPress={() => setAnchorId(active ? null : item.id)}
+                    style={[styles.baseItem, active && styles.baseItemActive]}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={{ uri: item.image_url }}
+                      style={styles.baseImg}
+                      resizeMode="cover"
+                    />
+                    {active && (
+                      <View style={styles.baseCheck}>
+                        <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+                      </View>
+                    )}
+                    <Text style={styles.baseItemLabel} numberOfLines={1}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+            <View style={styles.bottomBar}>
+              <TouchableOpacity
+                style={styles.generateBtn}
+                onPress={handleGenerate}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.generateBtnText}>
+                  {anchorId ? 'GENERATE LOOK' : 'GENERATE LOOK (NO BASE PIECE)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         )
       ) : (
         /* Results state */
@@ -269,9 +330,18 @@ export default function OccasionMatchScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.tryAnother} onPress={handleReset}>
-              <Text style={styles.tryAnotherText}>Try a different vibe</Text>
-            </TouchableOpacity>
+            <View style={styles.postGenActions}>
+              <TouchableOpacity onPress={handleReset} hitSlop={8}>
+                <Text style={styles.tryAnotherText}>Try a different vibe</Text>
+              </TouchableOpacity>
+              <Text style={styles.postGenDivider}>·</Text>
+              <TouchableOpacity
+                onPress={() => router.replace('/(tabs)/lookbook')}
+                hitSlop={8}
+              >
+                <Text style={styles.tryAnotherText}>Back to Lookbook</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -350,6 +420,40 @@ const makeStyles = (c: ThemeColors) =>
       fontWeight: '700',
       color: c.onAccent,
       letterSpacing: 1,
+    },
+
+    // Step 2 — base piece grid
+    pickerHeaderPad: { paddingHorizontal: 16, paddingTop: 16 },
+    baseGrid: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, gap: 12 },
+    baseRow: { gap: 12 },
+    baseItem: {
+      flex: 1,
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: c.surface,
+      borderWidth: 1.5,
+      borderColor: c.border,
+    },
+    baseItemActive: {
+      borderColor: c.accent,
+    },
+    baseImg: { width: '100%', aspectRatio: 3 / 4, backgroundColor: c.surfaceAlt },
+    baseCheck: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    baseItemLabel: {
+      fontSize: 12,
+      color: c.foreground,
+      padding: 8,
+      fontWeight: '500',
     },
 
     // Loading
@@ -493,10 +597,20 @@ const makeStyles = (c: ThemeColors) =>
       letterSpacing: 1,
     },
 
-    tryAnother: { alignItems: 'center', paddingVertical: 8 },
     tryAnotherText: {
       fontSize: 14,
       color: c.accent,
       fontWeight: '500',
+    },
+    postGenActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      paddingVertical: 8,
+    },
+    postGenDivider: {
+      fontSize: 14,
+      color: c.border,
     },
   });

@@ -14,7 +14,7 @@ Return exactly this structure:
   "pattern": "one of: solid | stripes | floral | plaid | geometric | animal-print | abstract | graphic | tie-dye",
   "fabric": "detected fabric if visible (e.g. cotton, denim, silk, wool, leather, linen, polyester, or 'unknown')",
   "fabric_care": "2-3 short sentences of care guidance for this fabric. If a care label is legible in the photo, transcribe its instructions instead of inferring.",
-  "season": "one of: spring-summer | fall-winter | all-season",
+  "season": "one of: spring | summer | fall | winter | all-season",
   "tags": ["5 to 8 short descriptive tags of one or two words each, e.g. 'Tailored', 'Lightweight', 'Oversized', 'Minimalist', 'Earth Tones'. Include the category, key colors, fabric, silhouette, and vibe."],
   "colors": [
     { "name": "color name", "hex": "#HEXCODE" }

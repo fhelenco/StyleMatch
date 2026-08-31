@@ -53,9 +53,10 @@ export async function generateOutfitSuggestions(
 export async function generateOutfitsForOccasion(
   occasion: string,
   season: string | undefined,
-  wardrobe: object[]
+  wardrobe: object[],
+  anchorItem?: object
 ): Promise<OutfitSuggestion[]> {
-  const prompt = buildOccasionOutfitPrompt(occasion, season, wardrobe);
+  const prompt = buildOccasionOutfitPrompt(occasion, season, wardrobe, anchorItem);
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,

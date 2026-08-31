@@ -67,7 +67,7 @@ Respond ONLY with a valid JSON array — no markdown, no preamble:
     "item_ids": ["uuid1", "uuid2", "uuid3"],
     "cohesion_score": 0-100 integer reflecting how well the pieces work together,
     "occasion": "one of: casual | work | date-night | weekend | formal | gym | party | beach | bar",
-    "season": "spring-summer | fall-winter | all-season",
+    "season": "spring | summer | fall | winter | all-season",
     "style_vibe": "2-3 word vibe (e.g. 'effortless chic', 'sharp minimalist')",
     "style_notes": "2-3 sentences explaining WHY this combination works — colors, proportions, occasion fit",
     "trend_note": "timeless | on-trend | classic-with-a-twist"
@@ -79,29 +79,36 @@ Respond ONLY with a valid JSON array — no markdown, no preamble:
 export function buildOccasionOutfitPrompt(
   occasion: string,
   season: string | undefined,
-  wardrobe: object[]
+  wardrobe: object[],
+  anchorItem?: object
 ): string {
-  const wardrobeList = (wardrobe as Array<Record<string, unknown>>).map((item) => ({
-    id: item.id,
-    label: item.label,
-    category: item.category,
-    style_category: item.style_category,
-    colors: item.colors,
-    fabric: item.fabric,
-    pattern: item.pattern,
-    season: item.season,
-  }));
+  const wardrobeList = (wardrobe as Array<Record<string, unknown>>)
+    .filter((item) => !anchorItem || (item as { id: string }).id !== (anchorItem as { id: string }).id)
+    .map((item) => ({
+      id: item.id,
+      label: item.label,
+      category: item.category,
+      style_category: item.style_category,
+      colors: item.colors,
+      fabric: item.fabric,
+      pattern: item.pattern,
+      season: item.season,
+    }));
 
   return `
 You are an expert fashion stylist with deep knowledge of color theory, fabric compatibility, and contemporary style.
 
 The user wants a full outfit built from scratch for this occasion: ${occasion}
 ${season ? `Target season: ${season}` : 'No specific season constraint — pick pieces appropriate for any season.'}
-
+${
+  anchorItem
+    ? `\nEvery outfit MUST be built around this specific base piece, which the user has already chosen:\n${JSON.stringify(anchorItem, null, 2)}\nEvery item_ids array must include this piece's id ("${(anchorItem as { id: string }).id}"), styled to fit the occasion and season above.\n`
+    : ''
+}
 Their wardrobe contains these items:
 ${JSON.stringify(wardrobeList, null, 2)}
 
-Generate 3 to 5 outfit combinations suited to this occasion${season ? ' and season' : ''}, using ONLY items from the wardrobe above.
+Generate 3 to 5 outfit combinations suited to this occasion${season ? ' and season' : ''}${anchorItem ? ', all built around the base piece above,' : ''} using ONLY items from the wardrobe above${anchorItem ? ' plus the base piece' : ''}.
 
 OUTFIT COMPLETENESS (most important — do not violate):
 - Every outfit MUST be a complete head-to-toe look. It MUST include a bottom garment (trousers, jeans, skirt, shorts, leggings) OR a one-piece (dress, jumpsuit, romper).
@@ -110,6 +117,7 @@ OUTFIT COMPLETENESS (most important — do not violate):
 - Outerwear (blazer, coat, jacket) is optional and layered on top of an already-complete outfit.
 - The only exception: if the wardrobe genuinely contains no bottoms and no one-pieces, return the best top + shoes pairing you can and say so in style_notes.
 - Do not force unrelated items together just to pad the outfit.
+- Do NOT stop at the bare minimum. If the wardrobe has an accessory (bag, belt, jewelry, hat, scarf, sunglasses) or a layering piece (outerwear, vest) that would genuinely elevate the look for this occasion, INCLUDE it — a stylist finishes a look, they don't just cover the body. Skip an accessory only when nothing in the wardrobe actually fits the outfit; never omit one just to keep the array short.
 
 Apply these fashion rules:
 
