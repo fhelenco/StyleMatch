@@ -39,7 +39,11 @@ export function useSuggestOutfits(anchorItemId: string | null) {
 }
 
 export function useSuggestOutfitsByOccasion() {
-  return useMutation<OutfitSuggestion[], Error, { occasion: string; season?: string }>({
+  return useMutation<
+    OutfitSuggestion[],
+    Error,
+    { occasion: string; season?: string; anchor_item_id?: string }
+  >({
     mutationFn: (body) =>
       apiRequest<OutfitSuggestion[]>('/api/outfits/suggest-by-occasion', {
         method: 'POST',

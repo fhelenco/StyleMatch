@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CategoryFilter } from '../../components/wardrobe/CategoryFilter';
 import { WardrobeGrid } from '../../components/wardrobe/WardrobeGrid';
-import { FilterSheet, WardrobeFilters, DEFAULT_FILTERS } from '../../components/wardrobe/FilterSheet';
+import { FilterSheet, WardrobeFilters, DEFAULT_FILTERS, seasonMatches } from '../../components/wardrobe/FilterSheet';
 import { useWardrobe } from '../../hooks/useWardrobe';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -36,7 +36,8 @@ export default function WardrobeScreen() {
 
   const filtered = useMemo(() => {
     let list = category === 'all' ? items : items.filter((i) => i.category === category);
-    if (filters.seasons.length) list = list.filter((i) => filters.seasons.includes(i.season ?? ''));
+    if (filters.seasons.length)
+      list = list.filter((i) => filters.seasons.some((fs) => seasonMatches(fs, i.season)));
     if (filters.styles.length)
       list = list.filter((i) => i.style_category && filters.styles.includes(i.style_category));
 

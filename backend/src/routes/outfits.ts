@@ -12,7 +12,12 @@ const router = Router();
 const OCCASIONS = [
   'casual', 'work', 'date-night', 'weekend', 'formal', 'gym', 'party', 'beach', 'bar',
 ] as const;
-const SEASONS = ['spring-summer', 'fall-winter', 'all-season'] as const;
+// Kept the old grouped values (spring-summer, fall-winter) valid so existing
+// saved outfits and wardrobe items never fail this check — new saves should
+// use the granular spring/summer/fall/winter going forward.
+const SEASONS = [
+  'spring-summer', 'fall-winter', 'all-season', 'spring', 'summer', 'fall', 'winter',
+] as const;
 
 const SaveOutfitSchema = z.object({
   name: z.string().optional(),
@@ -27,6 +32,7 @@ const SaveOutfitSchema = z.object({
 const SuggestByOccasionSchema = z.object({
   occasion: z.enum(OCCASIONS),
   season: z.enum(SEASONS).optional(),
+  anchor_item_id: z.string().uuid().optional(),
 });
 
 router.post('/suggest/:anchorItemId', requireAuth, async (req: AuthRequest, res: Response) => {
@@ -65,7 +71,23 @@ router.post('/suggest-by-occasion', requireAuth, async (req: AuthRequest, res: R
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { occasion, season } = parsed.data;
+    const { occasion, season, anchor_item_id } = parsed.data;
+
+    let anchor: unknown = undefined;
+    if (anchor_item_id) {
+      const { data: anchorItem, error: anchorError } = await adminSupabase
+        .from('clothing_items')
+        .select('*')
+        .eq('id', anchor_item_id)
+        .eq('user_id', req.userId!)
+        .single();
+
+      if (anchorError || !anchorItem) {
+        res.status(404).json({ error: 'Base piece not found' });
+        return;
+      }
+      anchor = anchorItem;
+    }
 
     const { data: wardrobe, error: wardrobeError } = await adminSupabase
       .from('clothing_items')
@@ -78,7 +100,7 @@ router.post('/suggest-by-occasion', requireAuth, async (req: AuthRequest, res: R
       return;
     }
 
-    const suggestions = await generateOutfitsForOccasion(occasion, season, wardrobe);
+    const suggestions = await generateOutfitsForOccasion(occasion, season, wardrobe, anchor as object | undefined);
     res.json(suggestions);
   } catch (err) {
     console.error('suggest by occasion error:', err);
