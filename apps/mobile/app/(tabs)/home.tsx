@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
 import { HeroWave } from '../../components/home/HeroWave';
+import { useWeather } from '../../hooks/useWeather';
 import { useTheme, useThemedStyles } from '../../contexts/theme';
 import type { ThemeColors } from '../../lib/theme';
 
@@ -44,6 +45,7 @@ export default function HomeScreen() {
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const items = useWardrobeStore((s) => s.items);
   const displayItems = items.slice(0, 4);
+  const { data: weather, isLoading: weatherLoading } = useWeather();
 
   const scrollRef = useRef<any>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -309,6 +311,34 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
+        {/* ─── Weather ─── */}
+        {weatherLoading ? null : weather ? (
+          <View style={styles.weatherCard}>
+            <View style={styles.weatherInfo}>
+              <Text style={styles.weatherTemp}>{weather.tempC}°C</Text>
+              <View>
+                <Text style={styles.weatherCity}>{weather.city}</Text>
+                <Text style={styles.weatherCondition}>{weather.condition}</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.weatherCta}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: '/occasion-match',
+                  // 'casual' is a sensible catch-all vibe for an unprompted daily
+                  // suggestion — auto='1' tells the screen to skip the picker
+                  // and generate immediately instead of waiting for a tap.
+                  params: { season: weather.suggestedSeason, occasion: 'casual', auto: '1' },
+                })
+              }
+            >
+              <Text style={styles.weatherCtaText}>SEE A LOOK FOR TODAY</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {/* ─── View Lookbook CTA ─── */}
         <Animated.View onLayout={registerSection(1)} style={sectionStyle(1)}>
           <View style={styles.ctaSection}>
@@ -506,11 +536,44 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'center',
     },
 
+    /* Weather */
+    weatherCard: {
+      marginHorizontal: 16,
+      marginBottom: 32,
+      backgroundColor: c.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 18,
+      gap: 14,
+    },
+    weatherInfo: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+    weatherTemp: {
+      fontSize: 34,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+    },
+    weatherCity: { fontSize: 15, fontWeight: '600', color: c.foreground },
+    weatherCondition: { fontSize: 13, color: c.muted, marginTop: 2 },
+    weatherCta: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 20,
+      backgroundColor: c.accentDark,
+    },
+    weatherCtaText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: c.onAccent,
+      letterSpacing: 1,
+    },
+
     /* Philosophy */
     philosophy: {
       paddingHorizontal: 32,
       paddingTop: 24,
-      paddingBottom: 48,
+      paddingBottom: 32,
       alignItems: 'center',
       gap: 16,
     },
@@ -540,7 +603,7 @@ const makeStyles = (c: ThemeColors) =>
     },
 
     /* CTA */
-    ctaSection: { alignItems: 'center', paddingVertical: 24 },
+    ctaSection: { alignItems: 'center', paddingTop: 0, paddingBottom: 24 },
     lookbookCta: {
       width: 120,
       height: 120,

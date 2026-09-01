@@ -9,6 +9,7 @@ export interface Profile {
   avatar_url: string | null;
   preferred_language: string | null;
   preferred_theme: 'system' | 'light' | 'dark' | null;
+  home_city: string | null;
   created_at: string;
 }
 
@@ -30,7 +31,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (
-      updates: Partial<Pick<Profile, 'username' | 'preferred_language' | 'preferred_theme'>>
+      updates: Partial<Pick<Profile, 'username' | 'preferred_language' | 'preferred_theme' | 'home_city'>>
     ) => apiRequest<Profile>('/api/profile', { method: 'PATCH', body: JSON.stringify(updates) }),
     onSuccess: (data) => {
       queryClient.setQueryData(['profile'], data);

@@ -55,6 +55,7 @@ export default function ProfileScreen() {
   const [notifications, setNotifications] = useState(false);
   const [saving, setSaving] = useState(false);
   const [usernameDialogVisible, setUsernameDialogVisible] = useState(false);
+  const [cityDialogVisible, setCityDialogVisible] = useState(false);
 
   const cardRef = useRef<View>(null);
   const [permission, requestPermission] = MediaLibrary.usePermissions({ writeOnly: true });
@@ -191,6 +192,16 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleSaveCity = (value: string) => {
+    updateProfile(
+      { home_city: value },
+      {
+        onSuccess: () => setCityDialogVisible(false),
+        onError: () => Alert.alert('Could not save', "Couldn't update your city. Try again."),
+      }
+    );
+  };
+
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -271,6 +282,12 @@ export default function ProfileScreen() {
             onPress={() => {}}
           />
           <View style={styles.separator} />
+          <SettingsRow
+            label="Home City"
+            value={profile?.home_city || 'Not set'}
+            onPress={() => setCityDialogVisible(true)}
+          />
+          <View style={styles.separator} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Theme</Text>
             <SegmentedControl
@@ -314,6 +331,18 @@ export default function ProfileScreen() {
         saving={savingUsername}
         onCancel={() => setUsernameDialogVisible(false)}
         onConfirm={handleSaveUsername}
+      />
+
+      <PromptDialog
+        visible={cityDialogVisible}
+        title="Home city"
+        message="Used to suggest a look based on today's weather."
+        placeholder="e.g. São Paulo"
+        initialValue={profile?.home_city ?? ''}
+        maxLength={100}
+        saving={savingUsername}
+        onCancel={() => setCityDialogVisible(false)}
+        onConfirm={handleSaveCity}
       />
     </SafeAreaView>
   );

@@ -11,6 +11,7 @@ const UpdateProfileSchema = z.object({
   username: z.string().min(1).max(50).optional(),
   preferred_language: z.string().optional(),
   preferred_theme: z.enum(['system', 'light', 'dark']).optional(),
+  home_city: z.string().max(100).optional(),
 });
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {

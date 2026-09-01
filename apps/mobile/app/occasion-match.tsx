@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWardrobeStore } from '../stores/wardrobeStore';
 import { useSuggestOutfitsByOccasion, useSaveOutfit, OutfitSuggestion } from '../hooks/useOutfits';
@@ -54,10 +54,15 @@ export default function OccasionMatchScreen() {
   const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
   const items = useWardrobeStore((s) => s.items);
+  const { season: seasonParam, occasion: occasionParam, auto } = useLocalSearchParams<{
+    season?: string;
+    occasion?: string;
+    auto?: string;
+  }>();
 
   const [step, setStep] = useState<'vibe' | 'base'>('vibe');
-  const [occasion, setOccasion] = useState<string | null>(null);
-  const [season, setSeason] = useState<string | null>(null);
+  const [occasion, setOccasion] = useState<string | null>(occasionParam ?? null);
+  const [season, setSeason] = useState<string | null>(seasonParam ?? null);
   const [anchorId, setAnchorId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saved, setSaved] = useState(false);
@@ -77,6 +82,18 @@ export default function OccasionMatchScreen() {
     setSaved(false);
     generate({ occasion, season: season ?? undefined, anchor_item_id: anchorId ?? undefined });
   };
+
+  // Coming from the weather card on Home — occasion + season are already
+  // decided, so skip the picker and generate immediately instead of making
+  // the user re-confirm a chip they didn't ask to see.
+  useEffect(() => {
+    if (auto === '1' && occasionParam) {
+      setActiveIndex(0);
+      setSaved(false);
+      generate({ occasion: occasionParam, season: seasonParam ?? undefined });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleReset = () => {
     resetSuggestions();
