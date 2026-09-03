@@ -45,20 +45,24 @@ export default function MatchScreen() {
   const { mutate: rescore } = useRescoreOutfit();
   const [saved, setSaved] = useState(false);
   const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [override, setOverride] = useState<{ cohesion_score: number; style_notes: string } | null>(
     null,
   );
   const [rescoring, setRescoring] = useState(false);
   const [addPickerOpen, setAddPickerOpen] = useState(false);
 
-  // Fresh suggestion (new anchor) → drop any manual additions.
+  // Fresh suggestion (new anchor) → drop any manual edits.
   useEffect(() => {
     setAddedIds([]);
+    setRemovedIds([]);
     setOverride(null);
   }, [anchorId]);
 
   const suggestion = suggestions?.[0];
-  const effectiveIds = suggestion ? [...suggestion.item_ids, ...addedIds] : [];
+  const effectiveIds = suggestion
+    ? [...suggestion.item_ids.filter((id) => !removedIds.includes(id)), ...addedIds]
+    : [];
   const matchedItems = effectiveIds
     .map((id) => items.find((i) => i.id === id))
     .filter((i): i is (typeof items)[number] => !!i);
@@ -81,11 +85,8 @@ export default function MatchScreen() {
     );
   };
 
-  const handleAddPiece = (newItem: ClothingItem) => {
-    setAddPickerOpen(false);
-    if (!suggestion || rescoring || effectiveIds.includes(newItem.id)) return;
-    const nextIds = [...effectiveIds, newItem.id];
-    setAddedIds((prev) => [...prev, newItem.id]);
+  const runRescore = (nextIds: string[]) => {
+    if (!suggestion) return;
     setSaved(false);
     setRescoring(true);
     rescore(
@@ -95,12 +96,34 @@ export default function MatchScreen() {
           setOverride({ cohesion_score: r.cohesion_score, style_notes: r.style_notes }),
         onError: () =>
           Alert.alert(
-            'Added, but not re-scored',
-            'The piece is in your look — we just couldn’t refresh the cohesion score.',
+            'Updated, but not re-scored',
+            'Your change is applied — we just couldn’t refresh the cohesion score.',
           ),
         onSettled: () => setRescoring(false),
       },
     );
+  };
+
+  const handleAddPiece = (newItem: ClothingItem) => {
+    setAddPickerOpen(false);
+    if (!suggestion || rescoring || effectiveIds.includes(newItem.id)) return;
+    setAddedIds((prev) => [...prev, newItem.id]);
+    runRescore([...effectiveIds, newItem.id]);
+  };
+
+  const handleRemovePiece = (itemId: string) => {
+    if (!suggestion || rescoring) return;
+    const nextIds = effectiveIds.filter((id) => id !== itemId);
+    if (nextIds.length < 2) {
+      Alert.alert('Keep at least two pieces', 'A look needs at least two pieces to hang together.');
+      return;
+    }
+    if (addedIds.includes(itemId)) {
+      setAddedIds((prev) => prev.filter((id) => id !== itemId));
+    } else {
+      setRemovedIds((prev) => [...prev, itemId]);
+    }
+    runRescore(nextIds);
   };
 
   return (
@@ -203,6 +226,16 @@ export default function MatchScreen() {
                   style={styles.pieceImg}
                   resizeMode="cover"
                 />
+                {matchedItems.length > 2 && (
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => handleRemovePiece(item.id)}
+                    disabled={rescoring}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={styles.pieceInfo}>
                 <Text style={styles.pieceRole}>
@@ -215,9 +248,7 @@ export default function MatchScreen() {
 
           {/* Add a piece */}
           {showLayerHint && (
-            <Text style={styles.layerHint}>
-              This look layers well — add a top to wear underneath.
-            </Text>
+            <Text style={styles.layerHint}>Add another piece to complete the look.</Text>
           )}
           <TouchableOpacity
             style={[styles.addPieceBtn, showLayerHint && styles.addPieceBtnHinted]}
@@ -422,6 +453,17 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surfaceAlt,
     },
     pieceImg: { width: '100%', height: '100%' },
+    removeBtn: {
+      position: 'absolute',
+      top: 6,
+      left: 6,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(20,17,15,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     pieceInfo: {
       flex: 1,
       padding: 16,

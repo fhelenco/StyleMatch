@@ -136,15 +136,11 @@ export default function OccasionMatchScreen() {
     lastIndex.current = 0;
   };
 
-  // Manually drop another wardrobe piece into the currently-viewed look, then
-  // ask the AI to re-score the fuller set.
-  const handleAddPiece = (index: number, newItem: ClothingItem) => {
-    setAddPickerIndex(null);
+  // Change the currently-viewed look's piece list, then ask the AI to re-score
+  // the new set. Shared by add and remove.
+  const applyPieceChange = (index: number, nextIds: string[]) => {
     const suggestion = displaySuggestions?.[index];
-    if (!suggestion || rescoringIndex !== null) return;
-    if (suggestion.item_ids.includes(newItem.id)) return;
-
-    const nextIds = [...suggestion.item_ids, newItem.id];
+    if (!suggestion) return;
     setDisplaySuggestions((prev) => {
       if (!prev) return prev;
       const next = [...prev];
@@ -169,12 +165,30 @@ export default function OccasionMatchScreen() {
           }),
         onError: () =>
           Alert.alert(
-            'Added, but not re-scored',
-            'The piece is in your look — we just couldn’t refresh the cohesion score.',
+            'Updated, but not re-scored',
+            'Your change is applied — we just couldn’t refresh the cohesion score.',
           ),
         onSettled: () => setRescoringIndex(null),
       },
     );
+  };
+
+  const handleAddPiece = (index: number, newItem: ClothingItem) => {
+    setAddPickerIndex(null);
+    const suggestion = displaySuggestions?.[index];
+    if (!suggestion || rescoringIndex !== null || suggestion.item_ids.includes(newItem.id)) return;
+    applyPieceChange(index, [...suggestion.item_ids, newItem.id]);
+  };
+
+  const handleRemovePiece = (index: number, itemId: string) => {
+    const suggestion = displaySuggestions?.[index];
+    if (!suggestion || rescoringIndex !== null) return;
+    const nextIds = suggestion.item_ids.filter((id) => id !== itemId);
+    if (nextIds.length < 2) {
+      Alert.alert('Keep at least two pieces', 'A look needs at least two pieces to hang together.');
+      return;
+    }
+    applyPieceChange(index, nextIds);
   };
 
   const handleBack = () => {
@@ -295,6 +309,16 @@ export default function OccasionMatchScreen() {
             <View key={item.id} style={styles.pieceCard}>
               <View style={styles.pieceThumb}>
                 <Image source={{ uri: item.image_url }} style={styles.pieceImg} resizeMode="cover" />
+                {matchedItems.length > 2 && (
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => handleRemovePiece(index, item.id)}
+                    disabled={rescoring || !!swappingItemId}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={styles.pieceInfo}>
                 <Text style={styles.pieceRole}>{CATEGORY_ROLE[item.category] ?? 'PIECE'}</Text>
@@ -303,7 +327,7 @@ export default function OccasionMatchScreen() {
               <TouchableOpacity
                 style={styles.swapBtn}
                 onPress={() => handleSwapPiece(index, item)}
-                disabled={!!swappingItemId}
+                disabled={!!swappingItemId || rescoring}
                 activeOpacity={0.7}
                 hitSlop={8}
               >
@@ -319,9 +343,7 @@ export default function OccasionMatchScreen() {
 
         {/* Add a piece */}
         {showLayerHint && (
-          <Text style={styles.layerHint}>
-            This look layers well — add a top to wear underneath.
-          </Text>
+          <Text style={styles.layerHint}>Add another piece to complete the look.</Text>
         )}
         <TouchableOpacity
           style={[styles.addPieceBtn, showLayerHint && styles.addPieceBtnHinted]}
@@ -780,6 +802,17 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surfaceAlt,
     },
     pieceImg: { width: '100%', height: '100%' },
+    removeBtn: {
+      position: 'absolute',
+      top: 6,
+      left: 6,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(20,17,15,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     pieceInfo: {
       flex: 1,
       padding: 16,
