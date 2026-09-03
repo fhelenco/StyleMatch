@@ -2,7 +2,11 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { adminSupabase } from '../services/supabaseService';
-import { generateOutfitSuggestions, generateOutfitsForOccasion } from '../services/claudeService';
+import {
+  generateOutfitSuggestions,
+  generateOutfitsForOccasion,
+  swapOutfitPiece,
+} from '../services/claudeService';
 
 const router = Router();
 
@@ -33,6 +37,14 @@ const SuggestByOccasionSchema = z.object({
   occasion: z.enum(OCCASIONS),
   season: z.enum(SEASONS).optional(),
   anchor_item_id: z.string().uuid().optional(),
+});
+
+const SwapPieceSchema = z.object({
+  keep_item_ids: z.array(z.string().uuid()),
+  exclude_item_id: z.string().uuid(),
+  category: z.enum(['tops', 'bottoms', 'shoes', 'accessories', 'outerwear']),
+  occasion: z.enum(OCCASIONS),
+  season: z.enum(SEASONS).optional(),
 });
 
 router.post('/suggest/:anchorItemId', requireAuth, async (req: AuthRequest, res: Response) => {
@@ -105,6 +117,51 @@ router.post('/suggest-by-occasion', requireAuth, async (req: AuthRequest, res: R
   } catch (err) {
     console.error('suggest by occasion error:', err);
     res.status(500).json({ error: 'Failed to generate suggestions' });
+  }
+});
+
+router.post('/swap-piece', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const parsed = SwapPieceSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { keep_item_ids, exclude_item_id, category, occasion, season } = parsed.data;
+
+    const { data: wardrobe, error: wardrobeError } = await adminSupabase
+      .from('clothing_items')
+      .select('*')
+      .eq('user_id', req.userId!);
+
+    if (wardrobeError) throw wardrobeError;
+    const wardrobeItems = wardrobe || [];
+
+    const keepItems = wardrobeItems.filter((i) => keep_item_ids.includes(i.id));
+    const candidates = wardrobeItems.filter(
+      (i) => i.category === category && i.id !== exclude_item_id && !keep_item_ids.includes(i.id)
+    );
+
+    if (candidates.length === 0) {
+      res.status(400).json({ error: 'No alternative pieces available in this category' });
+      return;
+    }
+
+    const result = await swapOutfitPiece(category, occasion, season, keepItems, candidates);
+    const replacement = wardrobeItems.find((i) => i.id === result.item_id);
+    if (!replacement) {
+      res.status(500).json({ error: 'AI returned an item that is not a valid candidate' });
+      return;
+    }
+
+    res.json({
+      item: replacement,
+      cohesion_score: result.cohesion_score,
+      style_notes: result.style_notes,
+    });
+  } catch (err) {
+    console.error('swap piece error:', err);
+    res.status(500).json({ error: 'Failed to swap piece' });
   }
 });
 

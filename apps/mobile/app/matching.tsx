@@ -32,7 +32,12 @@ export default function MatchScreen() {
   const { anchor } = useLocalSearchParams<{ anchor?: string }>();
   const items = useWardrobeStore((s) => s.items);
   const [anchorId, setAnchorId] = useState<string | null>(anchor ?? null);
-  const { data: suggestions, isLoading } = useSuggestOutfits(anchorId);
+  const {
+    data: suggestions,
+    isLoading,
+    isError,
+    refetch,
+  } = useSuggestOutfits(anchorId);
   const { mutate: saveOutfit, isPending: isSaving } = useSaveOutfit();
   const [saved, setSaved] = useState(false);
 
@@ -110,6 +115,26 @@ export default function MatchScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Creating your match...</Text>
+        </View>
+      ) : isError ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={40} color={colors.muted} />
+          <Text style={styles.errorTitle}>Couldn't create your match</Text>
+          <Text style={styles.errorText}>
+            Something went wrong reaching our styling AI. Please try again in a moment.
+          </Text>
+          <TouchableOpacity style={styles.errorRetryBtn} onPress={() => refetch()} activeOpacity={0.85}>
+            <Text style={styles.errorRetryText}>TRY AGAIN</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tryAnother}
+            onPress={() => {
+              setAnchorId(null);
+              setSaved(false);
+            }}
+          >
+            <Text style={styles.tryAnotherText}>Choose a different piece</Text>
+          </TouchableOpacity>
         </View>
       ) : suggestion ? (
         /* Results state */
@@ -241,6 +266,41 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 16,
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
       color: c.muted,
+    },
+
+    // Error
+    errorContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+      gap: 10,
+    },
+    errorTitle: {
+      fontSize: 18,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    errorText: {
+      fontSize: 14,
+      color: c.muted,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    errorRetryBtn: {
+      backgroundColor: c.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 32,
+    },
+    errorRetryText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: c.onAccent,
+      letterSpacing: 1,
     },
 
     // Results
