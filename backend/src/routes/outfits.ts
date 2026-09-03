@@ -6,6 +6,7 @@ import {
   generateOutfitSuggestions,
   generateOutfitsForOccasion,
   swapOutfitPiece,
+  rescoreOutfit,
 } from '../services/claudeService';
 
 const router = Router();
@@ -43,6 +44,12 @@ const SwapPieceSchema = z.object({
   keep_item_ids: z.array(z.string().uuid()),
   exclude_item_id: z.string().uuid(),
   category: z.enum(['tops', 'bottoms', 'shoes', 'accessories', 'outerwear']),
+  occasion: z.enum(OCCASIONS),
+  season: z.enum(SEASONS).optional(),
+});
+
+const RescoreSchema = z.object({
+  item_ids: z.array(z.string().uuid()).min(2),
   occasion: z.enum(OCCASIONS),
   season: z.enum(SEASONS).optional(),
 });
@@ -162,6 +169,38 @@ router.post('/swap-piece', requireAuth, async (req: AuthRequest, res: Response) 
   } catch (err) {
     console.error('swap piece error:', err);
     res.status(500).json({ error: 'Failed to swap piece' });
+  }
+});
+
+// Re-score a look after the user has manually added (or otherwise edited) a
+// piece. No item selection here — the set is fixed, we just want a fresh
+// cohesion_score + style_notes for it.
+router.post('/rescore', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const parsed = RescoreSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { item_ids, occasion, season } = parsed.data;
+
+    const { data: wardrobe, error: wardrobeError } = await adminSupabase
+      .from('clothing_items')
+      .select('*')
+      .eq('user_id', req.userId!);
+
+    if (wardrobeError) throw wardrobeError;
+    const items = (wardrobe || []).filter((i) => item_ids.includes(i.id));
+    if (items.length < 2) {
+      res.status(400).json({ error: 'Not enough valid items to score' });
+      return;
+    }
+
+    const result = await rescoreOutfit(items, occasion, season);
+    res.json(result);
+  } catch (err) {
+    console.error('rescore error:', err);
+    res.status(500).json({ error: 'Failed to score the outfit' });
   }
 });
 

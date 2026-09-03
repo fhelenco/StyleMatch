@@ -168,6 +168,45 @@ The base top is always present unless the look is a one-piece; any outerwear com
 `;
 }
 
+export function buildRescorePrompt(
+  items: object[],
+  occasion: string,
+  season: string | undefined
+): string {
+  const itemList = (items as Array<Record<string, unknown>>).map((item) => ({
+    id: item.id,
+    label: item.label,
+    category: item.category,
+    style_category: item.style_category,
+    colors: item.colors,
+    fabric: item.fabric,
+    pattern: item.pattern,
+    season: item.season,
+  }));
+
+  return `
+You are an expert fashion stylist with deep knowledge of color theory, fabric compatibility, and contemporary style.
+
+The user has assembled this outfit for the occasion "${occasion}"${season ? ` (season: ${season})` : ''}:
+${JSON.stringify(itemList, null, 2)}
+
+Judge it as a finished look. Consider:
+- Color: complementary / analogous / triadic / monochromatic balance, the 60-30-10 rule, any clashes
+- Fabric: weight vs. season, competing vs. complementary textures
+- Proportion: volume balance top-to-bottom
+- Layering: if there's outerwear or an open/shirt-jacket layer, is there a base top under it?
+- Style coherence and fitness for the occasion
+
+Rate its cohesion 0–100 (90+ = flawless, 75–89 = solid, 60–74 = workable but a bit off, below 60 = forced/clashing).
+
+Respond ONLY with valid JSON — no markdown, no preamble:
+{
+  "cohesion_score": 0-100 integer,
+  "style_notes": "2-3 sentences on why the look works or where it falls slightly short, and any quick fix"
+}
+`;
+}
+
 export function buildSwapPiecePrompt(
   category: string,
   occasion: string,

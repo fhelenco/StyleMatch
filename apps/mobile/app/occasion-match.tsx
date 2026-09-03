@@ -21,8 +21,11 @@ import {
   useSuggestOutfitsByOccasion,
   useSaveOutfit,
   useSwapPiece,
+  useRescoreOutfit,
   OutfitSuggestion,
 } from '../hooks/useOutfits';
+import { AddPieceSheet } from '../components/outfits/AddPieceSheet';
+import { needsBaseLayer } from '../lib/outfitLayering';
 import { useTheme, useThemedStyles } from '../contexts/theme';
 import type { ThemeColors } from '../lib/theme';
 
@@ -83,6 +86,10 @@ export default function OccasionMatchScreen() {
   // over the store when rendering a matched piece.
   const [swappedItemsById, setSwappedItemsById] = useState<Record<string, ClothingItem>>({});
   const [swappingItemId, setSwappingItemId] = useState<string | null>(null);
+  // Add-a-piece: index of the look the picker is open for, and which look is
+  // being re-scored after an add.
+  const [addPickerIndex, setAddPickerIndex] = useState<number | null>(null);
+  const [rescoringIndex, setRescoringIndex] = useState<number | null>(null);
 
   const {
     mutate: generate,
@@ -93,6 +100,7 @@ export default function OccasionMatchScreen() {
   } = useSuggestOutfitsByOccasion();
   const { mutate: saveOutfit, isPending: isSaving } = useSaveOutfit();
   const { mutate: swapPiece } = useSwapPiece();
+  const { mutate: rescore } = useRescoreOutfit();
 
   useEffect(() => {
     setDisplaySuggestions(suggestions ?? null);
@@ -123,7 +131,50 @@ export default function OccasionMatchScreen() {
     setActiveIndex(0);
     setSaved(false);
     setSwappedItemsById({});
+    setAddPickerIndex(null);
+    setRescoringIndex(null);
     lastIndex.current = 0;
+  };
+
+  // Manually drop another wardrobe piece into the currently-viewed look, then
+  // ask the AI to re-score the fuller set.
+  const handleAddPiece = (index: number, newItem: ClothingItem) => {
+    setAddPickerIndex(null);
+    const suggestion = displaySuggestions?.[index];
+    if (!suggestion || rescoringIndex !== null) return;
+    if (suggestion.item_ids.includes(newItem.id)) return;
+
+    const nextIds = [...suggestion.item_ids, newItem.id];
+    setDisplaySuggestions((prev) => {
+      if (!prev) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], item_ids: nextIds };
+      return next;
+    });
+    setSaved(false);
+    setRescoringIndex(index);
+    rescore(
+      { item_ids: nextIds, occasion: suggestion.occasion, season: suggestion.season },
+      {
+        onSuccess: (r) =>
+          setDisplaySuggestions((prev) => {
+            if (!prev) return prev;
+            const next = [...prev];
+            next[index] = {
+              ...next[index],
+              cohesion_score: r.cohesion_score,
+              style_notes: r.style_notes,
+            };
+            return next;
+          }),
+        onError: () =>
+          Alert.alert(
+            'Added, but not re-scored',
+            'The piece is in your look — we just couldn’t refresh the cohesion score.',
+          ),
+        onSettled: () => setRescoringIndex(null),
+      },
+    );
   };
 
   const handleBack = () => {
@@ -213,6 +264,8 @@ export default function OccasionMatchScreen() {
     const matchedItems = suggestion.item_ids
       .map((id) => swappedItemsById[id] ?? items.find((i) => i.id === id))
       .filter((i): i is ClothingItem => !!i);
+    const rescoring = rescoringIndex === index;
+    const showLayerHint = needsBaseLayer(matchedItems) && !rescoring;
     return (
       <ScrollView
         style={{ width }}
@@ -222,8 +275,14 @@ export default function OccasionMatchScreen() {
         {/* Cohesion Score */}
         <View style={styles.scoreContainer}>
           <View style={styles.scoreCircle}>
-            <Text style={styles.scoreValue}>{Math.round(suggestion.cohesion_score ?? 0)}</Text>
-            <Text style={styles.scorePercent}>%</Text>
+            {rescoring ? (
+              <ActivityIndicator color={colors.accent} />
+            ) : (
+              <>
+                <Text style={styles.scoreValue}>{Math.round(suggestion.cohesion_score ?? 0)}</Text>
+                <Text style={styles.scorePercent}>%</Text>
+              </>
+            )}
           </View>
           <Text style={styles.scoreLabel}>COHESION SCORE</Text>
           <Text style={styles.vibeLabel}>{suggestion.style_vibe}</Text>
@@ -257,6 +316,28 @@ export default function OccasionMatchScreen() {
             </View>
           );
         })}
+
+        {/* Add a piece */}
+        {showLayerHint && (
+          <Text style={styles.layerHint}>
+            This look layers well — add a top to wear underneath.
+          </Text>
+        )}
+        <TouchableOpacity
+          style={[styles.addPieceBtn, showLayerHint && styles.addPieceBtnHinted]}
+          onPress={() => setAddPickerIndex(index)}
+          disabled={rescoring}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="add"
+            size={18}
+            color={showLayerHint ? colors.onAccent : colors.accent}
+          />
+          <Text style={[styles.addPieceText, showLayerHint && styles.addPieceTextHinted]}>
+            ADD A PIECE
+          </Text>
+        </TouchableOpacity>
 
         {/* AI Citation */}
         <View style={styles.citation}>
@@ -458,6 +539,32 @@ export default function OccasionMatchScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          <AddPieceSheet
+            visible={addPickerIndex !== null}
+            items={
+              addPickerIndex !== null
+                ? items.filter(
+                    (i) =>
+                      !(displaySuggestions ?? suggestions ?? [])[addPickerIndex]?.item_ids.includes(
+                        i.id,
+                      ),
+                  )
+                : []
+            }
+            preferCategory={
+              addPickerIndex !== null &&
+              needsBaseLayer(
+                ((displaySuggestions ?? suggestions ?? [])[addPickerIndex]?.item_ids ?? [])
+                  .map((id) => swappedItemsById[id] ?? items.find((i) => i.id === id))
+                  .filter((i): i is ClothingItem => !!i),
+              )
+                ? 'tops'
+                : null
+            }
+            onPick={(item) => addPickerIndex !== null && handleAddPiece(addPickerIndex, item)}
+            onClose={() => setAddPickerIndex(null)}
+          />
         </View>
       )}
     </SafeAreaView>
@@ -696,6 +803,40 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 20,
       fontFamily: 'PlayfairDisplay_700Bold',
       color: c.foreground,
+    },
+
+    // Add a piece
+    layerHint: {
+      fontSize: 13,
+      color: c.muted,
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginTop: 4,
+    },
+    addPieceBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: c.accent,
+      backgroundColor: c.surface,
+    },
+    addPieceBtnHinted: {
+      backgroundColor: c.accent,
+      borderStyle: 'solid',
+    },
+    addPieceText: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      color: c.accent,
+    },
+    addPieceTextHinted: {
+      color: c.onAccent,
     },
 
     // Citation

@@ -4,6 +4,7 @@ import {
   buildOutfitSuggestionsPrompt,
   buildOccasionOutfitPrompt,
   buildSwapPiecePrompt,
+  buildRescorePrompt,
 } from '../prompts';
 import { GarmentAnalysis, OutfitSuggestion } from '../types';
 
@@ -78,6 +79,28 @@ export async function swapOutfitPiece(
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
   const clean = text.replace(/```json|```/g, '').trim();
   return JSON.parse(clean) as SwapPieceResult;
+}
+
+export interface RescoreResult {
+  cohesion_score: number;
+  style_notes: string;
+}
+
+export async function rescoreOutfit(
+  items: object[],
+  occasion: string,
+  season: string | undefined
+): Promise<RescoreResult> {
+  const prompt = buildRescorePrompt(items, occasion, season);
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 512,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean) as RescoreResult;
 }
 
 export async function generateOutfitsForOccasion(
