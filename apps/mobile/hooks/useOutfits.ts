@@ -35,6 +35,9 @@ export function useSuggestOutfits(anchorItemId: string | null) {
       }),
     enabled: !!anchorItemId,
     staleTime: 5 * 60 * 1000,
+    // AI/network failures here aren't transient — retrying just delays
+    // showing the error state for no benefit.
+    retry: 1,
   });
 }
 
@@ -64,6 +67,49 @@ export function useOutfitDetail(id: string) {
     queryKey: ['outfits', id],
     queryFn: () => apiRequest<SavedOutfit>(`/api/outfits/${id}`),
     enabled: !!id,
+  });
+}
+
+export interface SwapPieceResult {
+  item: {
+    id: string;
+    user_id: string;
+    label: string;
+    garment_type: string;
+    category: 'tops' | 'bottoms' | 'shoes' | 'accessories' | 'outerwear';
+    style_category?: string;
+    pattern?: string;
+    fabric?: string;
+    season?: string;
+    colors: { name: string; hex: string }[];
+    image_url: string;
+    image_path: string;
+    times_worn: number;
+    last_worn_at?: string;
+    notes?: string;
+    created_at: string;
+  };
+  cohesion_score: number;
+  style_notes: string;
+}
+
+export function useSwapPiece() {
+  return useMutation<
+    SwapPieceResult,
+    Error,
+    {
+      keep_item_ids: string[];
+      exclude_item_id: string;
+      category: string;
+      occasion: string;
+      season?: string;
+    }
+  >({
+    mutationFn: (body) =>
+      apiRequest<SwapPieceResult>('/api/outfits/swap-piece', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
   });
 }
 

@@ -370,7 +370,13 @@ export default function HomeScreen() {
         <Animated.View onLayout={registerSection(4)} style={sectionStyle(4)}>
           <View style={styles.productRow}>
             {[0, 1].map((i) => (
-              <View key={i} style={styles.productCard}>
+              <TouchableOpacity
+                key={i}
+                style={styles.productCard}
+                activeOpacity={displayItems[i] ? 0.8 : 1}
+                disabled={!displayItems[i]}
+                onPress={() => router.push(`/item/${displayItems[i].id}`)}
+              >
                 {displayItems[i] ? (
                   <Animated.Image
                     source={{ uri: displayItems[i].image_url }}
@@ -389,7 +395,7 @@ export default function HomeScreen() {
                 <Text style={styles.productName}>
                   {displayItems[i]?.label || PLACEHOLDER_NAMES[i]}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </Animated.View>
@@ -398,7 +404,13 @@ export default function HomeScreen() {
         <Animated.View onLayout={registerSection(5)} style={sectionStyle(5)}>
           <View style={styles.productRow}>
             {[2, 3].map((i) => (
-              <View key={i} style={styles.productCard}>
+              <TouchableOpacity
+                key={i}
+                style={styles.productCard}
+                activeOpacity={displayItems[i] ? 0.8 : 1}
+                disabled={!displayItems[i]}
+                onPress={() => router.push(`/item/${displayItems[i].id}`)}
+              >
                 {displayItems[i] ? (
                   <Animated.Image
                     source={{ uri: displayItems[i].image_url }}
@@ -417,7 +429,7 @@ export default function HomeScreen() {
                 <Text style={styles.productName}>
                   {displayItems[i]?.label || PLACEHOLDER_NAMES[i]}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </Animated.View>

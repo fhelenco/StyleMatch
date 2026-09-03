@@ -9,14 +9,20 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
+  Alert,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useWardrobeStore } from '../stores/wardrobeStore';
-import { useSuggestOutfitsByOccasion, useSaveOutfit, OutfitSuggestion } from '../hooks/useOutfits';
+import { useWardrobeStore, ClothingItem } from '../stores/wardrobeStore';
+import {
+  useSuggestOutfitsByOccasion,
+  useSaveOutfit,
+  useSwapPiece,
+  OutfitSuggestion,
+} from '../hooks/useOutfits';
 import { useTheme, useThemedStyles } from '../contexts/theme';
 import type { ThemeColors } from '../lib/theme';
 
@@ -68,13 +74,29 @@ export default function OccasionMatchScreen() {
   const [saved, setSaved] = useState(false);
   const lastIndex = useRef(0);
 
+  // Editable copy of the generated suggestions — piece swaps mutate this
+  // in place so the rest of a look (and its position in the carousel)
+  // survives without re-generating everything.
+  const [displaySuggestions, setDisplaySuggestions] = useState<OutfitSuggestion[] | null>(null);
+  // Items returned by a swap aren't always guaranteed to already be in the
+  // wardrobe store's current snapshot, so keep them here and prefer this
+  // over the store when rendering a matched piece.
+  const [swappedItemsById, setSwappedItemsById] = useState<Record<string, ClothingItem>>({});
+  const [swappingItemId, setSwappingItemId] = useState<string | null>(null);
+
   const {
     mutate: generate,
     data: suggestions,
     isPending: isGenerating,
+    isError: isGenerateError,
     reset: resetSuggestions,
   } = useSuggestOutfitsByOccasion();
   const { mutate: saveOutfit, isPending: isSaving } = useSaveOutfit();
+  const { mutate: swapPiece } = useSwapPiece();
+
+  useEffect(() => {
+    setDisplaySuggestions(suggestions ?? null);
+  }, [suggestions]);
 
   const handleGenerate = () => {
     if (!occasion) return;
@@ -97,8 +119,10 @@ export default function OccasionMatchScreen() {
 
   const handleReset = () => {
     resetSuggestions();
+    setStep('vibe');
     setActiveIndex(0);
     setSaved(false);
+    setSwappedItemsById({});
     lastIndex.current = 0;
   };
 
@@ -116,7 +140,7 @@ export default function OccasionMatchScreen() {
   };
 
   const handleSave = () => {
-    const suggestion = suggestions?.[activeIndex];
+    const suggestion = displaySuggestions?.[activeIndex];
     if (!suggestion) return;
     saveOutfit(
       {
@@ -128,6 +152,44 @@ export default function OccasionMatchScreen() {
         trend_note: suggestion.trend_note,
       },
       { onSuccess: () => setSaved(true) }
+    );
+  };
+
+  // Swap one piece in the currently-viewed look — the AI picks a
+  // replacement from the same category that best fits everything staying.
+  const handleSwapPiece = (index: number, item: ClothingItem) => {
+    const suggestion = displaySuggestions?.[index];
+    if (!suggestion || swappingItemId) return;
+
+    const keepIds = suggestion.item_ids.filter((id) => id !== item.id);
+    setSwappingItemId(item.id);
+    swapPiece(
+      {
+        keep_item_ids: keepIds,
+        exclude_item_id: item.id,
+        category: item.category,
+        occasion: suggestion.occasion,
+        season: suggestion.season,
+      },
+      {
+        onSuccess: (result) => {
+          setSwappedItemsById((prev) => ({ ...prev, [result.item.id]: result.item as ClothingItem }));
+          setDisplaySuggestions((prev) => {
+            if (!prev) return prev;
+            const next = [...prev];
+            const updated = { ...next[index] };
+            updated.item_ids = updated.item_ids.map((id) => (id === item.id ? result.item.id : id));
+            updated.cohesion_score = result.cohesion_score;
+            updated.style_notes = result.style_notes;
+            next[index] = updated;
+            return next;
+          });
+          setSaved(false);
+        },
+        onError: () =>
+          Alert.alert('Could not swap', "Couldn't find a fitting replacement for that piece."),
+        onSettled: () => setSwappingItemId(null),
+      }
     );
   };
 
@@ -143,12 +205,14 @@ export default function OccasionMatchScreen() {
     setSaved(false);
   };
 
-  const renderSuggestion = ({ item: suggestion }: { item: OutfitSuggestion }) => {
+  const renderSuggestion = ({ item: suggestion, index }: { item: OutfitSuggestion; index: number }) => {
     // Keep the stylist's ordering (shoes → bottom → top → layers) and show
-    // every piece — capping at 3 was silently hiding the bottoms.
+    // every piece — capping at 3 was silently hiding the bottoms. A swapped
+    // piece is looked up from swappedItemsById first since the wardrobe
+    // store snapshot may not reflect it yet.
     const matchedItems = suggestion.item_ids
-      .map((id) => items.find((i) => i.id === id))
-      .filter((i): i is (typeof items)[number] => !!i);
+      .map((id) => swappedItemsById[id] ?? items.find((i) => i.id === id))
+      .filter((i): i is ClothingItem => !!i);
     return (
       <ScrollView
         style={{ width }}
@@ -166,17 +230,33 @@ export default function OccasionMatchScreen() {
         </View>
 
         {/* Matched Pieces */}
-        {matchedItems.map((item) => (
-          <View key={item.id} style={styles.pieceCard}>
-            <View style={styles.pieceThumb}>
-              <Image source={{ uri: item.image_url }} style={styles.pieceImg} resizeMode="cover" />
+        {matchedItems.map((item) => {
+          const swappingThis = swappingItemId === item.id;
+          return (
+            <View key={item.id} style={styles.pieceCard}>
+              <View style={styles.pieceThumb}>
+                <Image source={{ uri: item.image_url }} style={styles.pieceImg} resizeMode="cover" />
+              </View>
+              <View style={styles.pieceInfo}>
+                <Text style={styles.pieceRole}>{CATEGORY_ROLE[item.category] ?? 'PIECE'}</Text>
+                <Text style={styles.pieceName}>{item.label}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.swapBtn}
+                onPress={() => handleSwapPiece(index, item)}
+                disabled={!!swappingItemId}
+                activeOpacity={0.7}
+                hitSlop={8}
+              >
+                {swappingThis ? (
+                  <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                  <Ionicons name="swap-horizontal" size={18} color={colors.accent} />
+                )}
+              </TouchableOpacity>
             </View>
-            <View style={styles.pieceInfo}>
-              <Text style={styles.pieceRole}>{CATEGORY_ROLE[item.category] ?? 'PIECE'}</Text>
-              <Text style={styles.pieceName}>{item.label}</Text>
-            </View>
-          </View>
-        ))}
+          );
+        })}
 
         {/* AI Citation */}
         <View style={styles.citation}>
@@ -202,6 +282,24 @@ export default function OccasionMatchScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loadingText}>Creating your look...</Text>
+          </View>
+        ) : isGenerateError ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={40} color={colors.muted} />
+            <Text style={styles.errorTitle}>Couldn't create your look</Text>
+            <Text style={styles.errorText}>
+              Something went wrong reaching our styling AI. Please try again in a moment.
+            </Text>
+            <TouchableOpacity
+              style={styles.errorRetryBtn}
+              onPress={handleGenerate}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.errorRetryText}>TRY AGAIN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tryAnother} onPress={handleReset}>
+              <Text style={styles.tryAnotherText}>Change occasion or season</Text>
+            </TouchableOpacity>
           </View>
         ) : step === 'vibe' ? (
           /* Step 1 — occasion + season */
@@ -315,7 +413,7 @@ export default function OccasionMatchScreen() {
         /* Results state */
         <View style={{ flex: 1 }}>
           <FlatList
-            data={suggestions}
+            data={displaySuggestions ?? suggestions}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -486,6 +584,42 @@ const makeStyles = (c: ThemeColors) =>
       color: c.muted,
     },
 
+    // Error
+    errorContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+      gap: 10,
+    },
+    errorTitle: {
+      fontSize: 18,
+      fontFamily: 'PlayfairDisplay_700Bold',
+      color: c.foreground,
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    errorText: {
+      fontSize: 14,
+      color: c.muted,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    errorRetryBtn: {
+      backgroundColor: c.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 32,
+    },
+    errorRetryText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: c.onAccent,
+      letterSpacing: 1,
+    },
+    tryAnother: { alignItems: 'center', paddingVertical: 8 },
+
     // Results
     results: { padding: 16, paddingBottom: 24, gap: 16 },
 
@@ -544,6 +678,13 @@ const makeStyles = (c: ThemeColors) =>
       padding: 16,
       justifyContent: 'center',
       gap: 6,
+    },
+    swapBtn: {
+      width: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderLeftWidth: 1,
+      borderLeftColor: c.border,
     },
     pieceRole: {
       fontSize: 11,

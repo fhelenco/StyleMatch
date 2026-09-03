@@ -1,5 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { GARMENT_ANALYSIS_PROMPT, buildOutfitSuggestionsPrompt, buildOccasionOutfitPrompt } from '../prompts';
+import {
+  GARMENT_ANALYSIS_PROMPT,
+  buildOutfitSuggestionsPrompt,
+  buildOccasionOutfitPrompt,
+  buildSwapPiecePrompt,
+} from '../prompts';
 import { GarmentAnalysis, OutfitSuggestion } from '../types';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -9,7 +14,7 @@ export async function analyzeGarment(
   mediaType: string
 ): Promise<GarmentAnalysis> {
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     messages: [
       {
@@ -40,7 +45,7 @@ export async function generateOutfitSuggestions(
 ): Promise<OutfitSuggestion[]> {
   const prompt = buildOutfitSuggestionsPrompt(anchorItem, wardrobe);
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -48,6 +53,31 @@ export async function generateOutfitSuggestions(
   const text = response.content[0].type === 'text' ? response.content[0].text : '';
   const clean = text.replace(/```json|```/g, '').trim();
   return JSON.parse(clean) as OutfitSuggestion[];
+}
+
+export interface SwapPieceResult {
+  item_id: string;
+  cohesion_score: number;
+  style_notes: string;
+}
+
+export async function swapOutfitPiece(
+  category: string,
+  occasion: string,
+  season: string | undefined,
+  keepItems: object[],
+  candidates: object[]
+): Promise<SwapPieceResult> {
+  const prompt = buildSwapPiecePrompt(category, occasion, season, keepItems, candidates);
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 512,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean) as SwapPieceResult;
 }
 
 export async function generateOutfitsForOccasion(
@@ -58,7 +88,7 @@ export async function generateOutfitsForOccasion(
 ): Promise<OutfitSuggestion[]> {
   const prompt = buildOccasionOutfitPrompt(occasion, season, wardrobe, anchorItem);
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });

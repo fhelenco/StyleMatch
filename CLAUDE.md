@@ -12,22 +12,23 @@ backend/        Express API + Claude/Anthropic integration
 
 **All Claude API calls live in one file:** [`backend/src/services/claudeService.ts`](backend/src/services/claudeService.ts).
 
-There are three call sites, and **all currently use the same model**:
+There are four call sites, and **all currently use the same model**:
 
 | Function | Purpose | Model |
 |---|---|---|
-| `analyzeGarment()` | Vision call — photo → label, category, tags, fabric care, colors, brand, collection | `claude-sonnet-4-6` |
-| `generateOutfitSuggestions()` | Text call — anchor item + wardrobe → outfit pairings with a cohesion score | `claude-sonnet-4-6` |
-| `generateOutfitsForOccasion()` | Text call — occasion (+ optional season) + wardrobe → outfit pairings with a cohesion score, no anchor item | `claude-sonnet-4-6` |
+| `analyzeGarment()` | Vision call — photo → label, category, tags, fabric care, colors, brand, collection | `claude-haiku-4-5-20251001` |
+| `generateOutfitSuggestions()` | Text call — anchor item + wardrobe → outfit pairings with a cohesion score | `claude-haiku-4-5-20251001` |
+| `swapOutfitPiece()` | Text call — swap one piece in an existing outfit for a better wardrobe alternative | `claude-haiku-4-5-20251001` |
+| `generateOutfitsForOccasion()` | Text call — occasion (+ optional season) + wardrobe → outfit pairings with a cohesion score, no anchor item | `claude-haiku-4-5-20251001` |
 
-**To change the model:** edit the `model:` field in all three `client.messages.create({...})` calls in `claudeService.ts`. There is no other place a model ID is configured — env vars, prompts, and types are model-agnostic.
+**To change the model:** edit the `model:` field in all four `client.messages.create({...})` calls in `claudeService.ts`. There is no other place a model ID is configured — env vars, prompts, and types are model-agnostic.
 
 Known-good model IDs, cheapest to most capable:
-- `claude-haiku-4-5-20251001` — cheapest, fastest (~2–4s per call), good enough for structured JSON extraction and outfit reasoning. Used briefly mid-project; switched away from since — the current choice below reads busy patterns and ambiguous fabrics more reliably.
-- `claude-sonnet-4-6` — current choice. Noticeably better nuance on busy patterns, ambiguous fabrics, and subtle style clashes than Haiku 4.5; ~2–3x slower and costlier ($3/$15 per MTok vs. Haiku's $1/$5).
-- `claude-sonnet-5` — newer than 4.6, similar price ($2/$10 per MTok — actually cheaper than 4.6), larger context (1M vs 4.6's 1M too, but generally the more current/capable pick in this tier). Considered but not adopted as of this writing; a reasonable next thing to try if 4.6's quality/cost tradeoff ever needs revisiting.
+- `claude-haiku-4-5-20251001` — current choice. Cheapest, fastest (~2–4s per call), good enough for structured JSON extraction and outfit reasoning ($1/$5 per MTok).
+- `claude-sonnet-4-6` — used before the latest Haiku switch. Noticeably better nuance on busy patterns, ambiguous fabrics, and subtle style clashes than Haiku 4.5; ~2–3x slower and costlier ($3/$15 per MTok).
+- `claude-sonnet-5` — newer than 4.6, cheaper ($2/$10 per MTok), larger context; a reasonable next thing to try if Haiku's quality ever needs a bump without going all the way to 4.6's cost.
 
-If you switch models, **verify all three call sites still return valid JSON** — the prompts (`backend/src/prompts/garmentAnalysis.ts`, `backend/src/prompts/outfitSuggestions.ts`) demand JSON-only output with no markdown fences, and `claudeService.ts` strips ` ```json ` fences defensively before `JSON.parse`. A weaker model may need a stricter prompt or a retry/repair step.
+If you switch models, **verify all four call sites still return valid JSON** — the prompts (`backend/src/prompts/garmentAnalysis.ts`, `backend/src/prompts/outfitSuggestions.ts`) demand JSON-only output with no markdown fences, and `claudeService.ts` strips ` ```json ` fences defensively before `JSON.parse`. A weaker model may need a stricter prompt or a retry/repair step.
 
 ## User profile (avatar, username, preferences)
 

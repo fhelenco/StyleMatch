@@ -164,3 +164,49 @@ Order item_ids as: shoes, bottom (or one-piece), top, then any outerwear/accesso
 ]
 `;
 }
+
+export function buildSwapPiecePrompt(
+  category: string,
+  occasion: string,
+  season: string | undefined,
+  keepItems: object[],
+  candidates: object[]
+): string {
+  const candidateList = (candidates as Array<Record<string, unknown>>).map((item) => ({
+    id: item.id,
+    label: item.label,
+    category: item.category,
+    style_category: item.style_category,
+    colors: item.colors,
+    fabric: item.fabric,
+    pattern: item.pattern,
+    season: item.season,
+  }));
+
+  return `
+You are an expert fashion stylist with deep knowledge of color theory, fabric compatibility, and contemporary style.
+
+The user has an outfit for this occasion: ${occasion}
+${season ? `Target season: ${season}` : 'No specific season constraint.'}
+
+These pieces are staying in the outfit and must NOT change:
+${JSON.stringify(keepItems, null, 2)}
+
+The user wants to swap out the current ${category} piece. Choose the ONE best replacement for it
+from this list of other ${category} pieces in their wardrobe:
+${JSON.stringify(candidateList, null, 2)}
+
+Apply the same stylist judgment as building a full outfit:
+- Color: complementary, analogous, triadic, or monochromatic with the pieces staying in the outfit
+- Fabric: weight and texture appropriate for the season, not competing with what's staying
+- Proportion: balances against what's staying (e.g. an oversized top calls for a slimmer replacement bottom)
+- Style coherence: shares a style language with the rest of the outfit for this occasion
+
+Respond ONLY with valid JSON — no markdown, no preamble:
+{
+  "item_id": "the chosen candidate's id, copied exactly from the list above",
+  "cohesion_score": 0-100 integer for how well the full outfit (pieces staying + this replacement) works together,
+  "style_notes": "1-2 sentences on why this replacement works"
+}
+`;
+}
