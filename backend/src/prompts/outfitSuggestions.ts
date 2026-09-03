@@ -28,7 +28,8 @@ OUTFIT COMPLETENESS (most important — do not violate):
 - It MUST contain a bottom garment (trousers, jeans, skirt, shorts, leggings) OR a one-piece (dress, jumpsuit) — unless the anchor piece itself already is one.
 - NEVER return a look that is only tops and/or outerwear and shoes. A blazer or jacket does NOT count as a bottom.
 - Add a top when the look is not a one-piece; add shoes when the wardrobe has any.
-- Outerwear is optional, layered on top of an already-complete outfit.
+- LAYERING: if the outfit includes ANY outerwear (jacket, blazer, coat, cardigan, overshirt/shirt-jacket), it MUST ALSO include a separate base top (t-shirt, tank, blouse, knit top, bodysuit) worn underneath it — never outerwear over bare skin. A look with a jacket therefore has at least 4 pieces: base top + jacket + bottom + shoes.
+- Outerwear is otherwise optional, layered on top of an already-complete outfit.
 - Only skip a bottom if the wardrobe genuinely has no bottoms and no one-pieces.
 
 Apply these fashion rules:
@@ -114,7 +115,8 @@ OUTFIT COMPLETENESS (most important — do not violate):
 - Every outfit MUST be a complete head-to-toe look. It MUST include a bottom garment (trousers, jeans, skirt, shorts, leggings) OR a one-piece (dress, jumpsuit, romper).
 - NEVER return a look that is only a top and/or outerwear and shoes. A blazer or jacket does NOT count as a bottom and does NOT replace one.
 - Add a top whenever the look is not a one-piece. Add shoes whenever the wardrobe contains any.
-- Outerwear (blazer, coat, jacket) is optional and layered on top of an already-complete outfit.
+- LAYERING: if the outfit includes ANY outerwear (jacket, blazer, coat, cardigan, overshirt/shirt-jacket), it MUST ALSO include a separate base top (t-shirt, tank, blouse, knit top, bodysuit) worn underneath it — never outerwear over bare skin. A look with a jacket therefore has at least 4 pieces: base top + jacket + bottom + shoes.
+- Outerwear (blazer, coat, jacket) is otherwise optional and layered on top of an already-complete outfit.
 - The only exception: if the wardrobe genuinely contains no bottoms and no one-pieces, return the best top + shoes pairing you can and say so in style_notes.
 - Do not force unrelated items together just to pad the outfit.
 - Do NOT stop at the bare minimum. If the wardrobe has an accessory (bag, belt, jewelry, hat, scarf, sunglasses) or a layering piece (outerwear, vest) that would genuinely elevate the look for this occasion, INCLUDE it — a stylist finishes a look, they don't just cover the body. Skip an accessory only when nothing in the wardrobe actually fits the outfit; never omit one just to keep the array short.
@@ -150,10 +152,11 @@ COHESION SCORE:
 Order the array from highest cohesion_score to lowest.
 
 Respond ONLY with a valid JSON array — no markdown, no preamble.
-Order item_ids as: shoes, bottom (or one-piece), top, then any outerwear/accessories.
+Order item_ids as: shoes, bottom (or one-piece), base top, then outerwear, then accessories.
+The base top is always present unless the look is a one-piece; any outerwear comes AFTER it in the array.
 [
   {
-    "item_ids": ["shoesId", "bottomId", "topId", "optionalLayerId"],
+    "item_ids": ["shoesId", "bottomId", "baseTopId", "outerwearId", "accessoryId"],
     "cohesion_score": 0-100 integer reflecting how well the pieces work together,
     "occasion": "${occasion}",
     "season": "${season ?? 'all-season'}",
