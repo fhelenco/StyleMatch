@@ -423,12 +423,12 @@ const makeStyles = (c: ThemeColors) =>
     scoreValue: {
       fontSize: 40,
       fontFamily: 'PlayfairDisplay_700Bold',
-      color: c.accent,
+      color: c.accentText,
     },
     scorePercent: {
       fontSize: 20,
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
-      color: c.accent,
+      color: c.accentText,
       marginTop: 6,
     },
     scoreLabel: {
@@ -473,7 +473,7 @@ const makeStyles = (c: ThemeColors) =>
     pieceRole: {
       fontSize: 11,
       fontWeight: '600',
-      color: c.accent,
+      color: c.accentText,
       letterSpacing: 2,
     },
     pieceName: {
@@ -510,7 +510,7 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 12,
       fontWeight: '700',
       letterSpacing: 1,
-      color: c.accent,
+      color: c.accentText,
     },
     addPieceTextHinted: {
       color: c.onAccent,
@@ -523,8 +523,10 @@ const makeStyles = (c: ThemeColors) =>
       padding: 20,
     },
     citationText: {
+      // Regular, not italic — an italic serif reads fine for a short
+      // one-line tagline but hurts legibility across a full paragraph.
       fontSize: 14,
-      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      fontFamily: 'PlayfairDisplay_400Regular',
       color: c.muted,
       lineHeight: 22,
     },
@@ -558,7 +560,7 @@ const makeStyles = (c: ThemeColors) =>
     tryAnother: { alignItems: 'center', paddingVertical: 8 },
     tryAnotherText: {
       fontSize: 14,
-      color: c.accent,
+      color: c.accentText,
       fontWeight: '500',
     },
   });

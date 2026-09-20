@@ -298,7 +298,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     categoryEmptyLink: {
       fontSize: 14,
-      color: c.accent,
+      color: c.accentText,
       fontWeight: '700',
       letterSpacing: 0.5,
       marginTop: 8,

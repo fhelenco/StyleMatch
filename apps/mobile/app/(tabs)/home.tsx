@@ -604,7 +604,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     philosophyItalic: {
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
-      color: c.accent,
+      color: c.accentText,
     },
     philosophyText: {
       fontSize: 14,
@@ -669,7 +669,7 @@ const makeStyles = (c: ThemeColors) =>
     productCategory: {
       fontSize: 10,
       fontWeight: '600',
-      color: c.accent,
+      color: c.accentText,
       letterSpacing: 2,
       paddingHorizontal: 14,
       paddingTop: 12,
@@ -745,7 +745,7 @@ const makeStyles = (c: ThemeColors) =>
     archiveSubtitle: {
       fontSize: 16,
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
-      color: c.accent,
+      color: c.accentText,
     },
     archiveIcon: {
       width: 32,
