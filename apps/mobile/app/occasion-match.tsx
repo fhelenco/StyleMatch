@@ -62,6 +62,12 @@ export default function OccasionMatchScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
+  // FlatList wraps each renderItem in its own cell that doesn't stretch
+  // (flex: 0 0 auto), so a flex:1 on the item's ScrollView has no effect —
+  // it just grows to content height and nothing scrolls. Measure the
+  // FlatList's own (correctly bounded) height instead and pass it down as
+  // an explicit pixel height on each card.
+  const [carouselHeight, setCarouselHeight] = useState(0);
   const items = useWardrobeStore((s) => s.items);
   const { season: seasonParam, occasion: occasionParam, auto } = useLocalSearchParams<{
     season?: string;
@@ -282,9 +288,10 @@ export default function OccasionMatchScreen() {
     const showLayerHint = needsBaseLayer(matchedItems) && !rescoring;
     return (
       <ScrollView
-        style={{ width }}
+        style={{ width, height: carouselHeight || undefined }}
         contentContainerStyle={styles.results}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {/* Cohesion Score */}
         <View style={styles.scoreContainer}>
@@ -516,6 +523,8 @@ export default function OccasionMatchScreen() {
         /* Results state */
         <View style={{ flex: 1 }}>
           <FlatList
+            style={{ flex: 1 }}
+            onLayout={(e) => setCarouselHeight(e.nativeEvent.layout.height)}
             data={displaySuggestions ?? suggestions}
             horizontal
             pagingEnabled
