@@ -54,7 +54,7 @@ const makeStyles = (c: ThemeColors) =>
     subtitle: {
       fontSize: 16,
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
-      color: c.accent,
+      color: c.accentText,
       textAlign: 'center',
     },
     description: {

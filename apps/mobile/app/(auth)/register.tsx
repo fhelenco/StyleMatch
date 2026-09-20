@@ -110,5 +110,5 @@ const makeStyles = (c: ThemeColors) =>
     },
     link: { alignItems: 'center', marginTop: 24 },
     linkText: { fontSize: 14, color: c.muted },
-    linkBold: { color: c.accent, fontWeight: '600' },
+    linkBold: { color: c.accentText, fontWeight: '600' },
   });

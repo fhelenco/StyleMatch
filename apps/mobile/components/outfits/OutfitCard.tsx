@@ -83,7 +83,7 @@ const makeStyles = (c: ThemeColors) =>
     vibe: { fontSize: 18, fontStyle: 'italic', color: c.foreground, fontWeight: '400' },
     notes: { fontSize: 13, color: c.muted, lineHeight: 20 },
     toggle: { paddingVertical: 2 },
-    toggleLabel: { fontSize: 12, color: c.accent, fontWeight: '600' },
+    toggleLabel: { fontSize: 12, color: c.accentText, fontWeight: '600' },
     footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
     trend: { fontSize: 11, color: c.muted, fontStyle: 'italic' },
     saveBtn: { paddingVertical: 10, paddingHorizontal: 16 },

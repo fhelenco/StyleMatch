@@ -119,7 +119,7 @@ const makeStyles = (c: ThemeColors) =>
     image: { flex: 1, borderRadius: 16, backgroundColor: c.surfaceAlt },
     actions: { gap: 10 },
     loadingOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: c.background,
       alignItems: 'center',
       justifyContent: 'center',

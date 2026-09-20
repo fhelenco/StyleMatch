@@ -27,7 +27,7 @@ export function ClothingCard({ item, onPress, width }: ClothingCardProps) {
     >
       <Image
         source={{ uri: item.image_url }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />
 

@@ -26,6 +26,13 @@ export interface ThemeColors {
   accent: string;
   /** deeper mauve — pressed / secondary accent */
   accentDark: string;
+  /**
+   * Mauve calibrated for text/icons on a light surface (≥4.5:1, WCAG AA) —
+   * `accent` itself is too light for that (≈2.2:1 on white). Use this for
+   * any accent-colored label, link, or small caps text; keep `accent` for
+   * backgrounds/fills, where it's checked against `onAccent` instead.
+   */
+  accentText: string;
   /** text/icon on an `accent` fill */
   onAccent: string;
   /** modal / sheet scrim */
@@ -46,10 +53,14 @@ export const lightColors: ThemeColors = {
   surfaceAlt: '#F5F0ED',
   foreground: '#1A1A1A',
   onForeground: '#FFFFFF',
-  muted: '#8C8C8C',
+  // Was #8C8C8C — only ~3.2:1 on background/surface and ~3:1 on surfaceAlt,
+  // below the 4.5:1 WCAG AA minimum for normal-size text. This passes ~5:1+
+  // against every light-mode surface.
+  muted: '#666666',
   border: '#E8E2DE',
   accent: '#C9A99A',
   accentDark: '#A07B6F',
+  accentText: '#8A6358',
   onAccent: '#FFFFFF',
   overlay: 'rgba(20,17,15,0.45)',
   inputBg: '#FFFFFF',
@@ -65,10 +76,14 @@ export const darkColors: ThemeColors = {
   surfaceAlt: '#262019',
   foreground: '#F2ECE6',
   onForeground: '#1A1A1A',
+  // Already ~5.1:1+ against every dark-mode surface — no change needed here.
   muted: '#9A8F86',
   border: '#332D27',
   accent: '#C9A99A',
   accentDark: '#B58B7B',
+  // accent is already ~8.6:1 against dark backgrounds, so it's fine as
+  // text here too — unlike light mode, no darker variant is needed.
+  accentText: '#C9A99A',
   // accent is the same mauve in both themes, so keep its text white in both
   onAccent: '#FFFFFF',
   overlay: 'rgba(0,0,0,0.6)',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,14 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWardrobeStore, ClothingItem } from '../stores/wardrobeStore';
-import { useSuggestOutfits, useSaveOutfit } from '../hooks/useOutfits';
+import { useSuggestOutfits, useSaveOutfit, useRescoreOutfit } from '../hooks/useOutfits';
+import { AddPieceSheet } from '../components/outfits/AddPieceSheet';
+import { needsBaseLayer } from '../lib/outfitLayering';
 import { useTheme, useThemedStyles } from '../contexts/theme';
 import type { ThemeColors } from '../lib/theme';
 
@@ -39,28 +42,88 @@ export default function MatchScreen() {
     refetch,
   } = useSuggestOutfits(anchorId);
   const { mutate: saveOutfit, isPending: isSaving } = useSaveOutfit();
+  const { mutate: rescore } = useRescoreOutfit();
   const [saved, setSaved] = useState(false);
+  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [override, setOverride] = useState<{ cohesion_score: number; style_notes: string } | null>(
+    null,
+  );
+  const [rescoring, setRescoring] = useState(false);
+  const [addPickerOpen, setAddPickerOpen] = useState(false);
+
+  // Fresh suggestion (new anchor) → drop any manual edits.
+  useEffect(() => {
+    setAddedIds([]);
+    setRemovedIds([]);
+    setOverride(null);
+  }, [anchorId]);
 
   const suggestion = suggestions?.[0];
-  const matchedItems = suggestion
-    ? suggestion.item_ids
-        .map((id) => items.find((i) => i.id === id))
-        .filter((i): i is (typeof items)[number] => !!i)
+  const effectiveIds = suggestion
+    ? [...suggestion.item_ids.filter((id) => !removedIds.includes(id)), ...addedIds]
     : [];
+  const matchedItems = effectiveIds
+    .map((id) => items.find((i) => i.id === id))
+    .filter((i): i is (typeof items)[number] => !!i);
+  const displayScore = override?.cohesion_score ?? suggestion?.cohesion_score ?? 0;
+  const displayNotes = override?.style_notes ?? suggestion?.style_notes ?? '';
+  const showLayerHint = !!suggestion && needsBaseLayer(matchedItems) && !rescoring;
 
   const handleSave = () => {
     if (!suggestion) return;
     saveOutfit(
       {
-        item_ids: suggestion.item_ids,
+        item_ids: effectiveIds,
         occasion: suggestion.occasion,
         season: suggestion.season,
         style_vibe: suggestion.style_vibe,
-        style_notes: suggestion.style_notes,
+        style_notes: displayNotes,
         trend_note: suggestion.trend_note,
       },
       { onSuccess: () => setSaved(true) }
     );
+  };
+
+  const runRescore = (nextIds: string[]) => {
+    if (!suggestion) return;
+    setSaved(false);
+    setRescoring(true);
+    rescore(
+      { item_ids: nextIds, occasion: suggestion.occasion, season: suggestion.season },
+      {
+        onSuccess: (r) =>
+          setOverride({ cohesion_score: r.cohesion_score, style_notes: r.style_notes }),
+        onError: () =>
+          Alert.alert(
+            'Updated, but not re-scored',
+            'Your change is applied — we just couldn’t refresh the cohesion score.',
+          ),
+        onSettled: () => setRescoring(false),
+      },
+    );
+  };
+
+  const handleAddPiece = (newItem: ClothingItem) => {
+    setAddPickerOpen(false);
+    if (!suggestion || rescoring || effectiveIds.includes(newItem.id)) return;
+    setAddedIds((prev) => [...prev, newItem.id]);
+    runRescore([...effectiveIds, newItem.id]);
+  };
+
+  const handleRemovePiece = (itemId: string) => {
+    if (!suggestion || rescoring) return;
+    const nextIds = effectiveIds.filter((id) => id !== itemId);
+    if (nextIds.length < 2) {
+      Alert.alert('Keep at least two pieces', 'A look needs at least two pieces to hang together.');
+      return;
+    }
+    if (addedIds.includes(itemId)) {
+      setAddedIds((prev) => prev.filter((id) => id !== itemId));
+    } else {
+      setRemovedIds((prev) => [...prev, itemId]);
+    }
+    runRescore(nextIds);
   };
 
   return (
@@ -142,10 +205,14 @@ export default function MatchScreen() {
           {/* Cohesion Score */}
           <View style={styles.scoreContainer}>
             <View style={styles.scoreCircle}>
-              <Text style={styles.scoreValue}>
-                {Math.round(suggestion.cohesion_score ?? 0)}
-              </Text>
-              <Text style={styles.scorePercent}>%</Text>
+              {rescoring ? (
+                <ActivityIndicator color={colors.accent} />
+              ) : (
+                <>
+                  <Text style={styles.scoreValue}>{Math.round(displayScore)}</Text>
+                  <Text style={styles.scorePercent}>%</Text>
+                </>
+              )}
             </View>
             <Text style={styles.scoreLabel}>COHESION SCORE</Text>
           </View>
@@ -159,6 +226,16 @@ export default function MatchScreen() {
                   style={styles.pieceImg}
                   resizeMode="cover"
                 />
+                {matchedItems.length > 2 && (
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => handleRemovePiece(item.id)}
+                    disabled={rescoring}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={styles.pieceInfo}>
                 <Text style={styles.pieceRole}>
@@ -169,11 +246,29 @@ export default function MatchScreen() {
             </View>
           ))}
 
+          {/* Add a piece */}
+          {showLayerHint && (
+            <Text style={styles.layerHint}>Add another piece to complete the look.</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.addPieceBtn, showLayerHint && styles.addPieceBtnHinted]}
+            onPress={() => setAddPickerOpen(true)}
+            disabled={rescoring}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="add"
+              size={18}
+              color={showLayerHint ? colors.onAccent : colors.accent}
+            />
+            <Text style={[styles.addPieceText, showLayerHint && styles.addPieceTextHinted]}>
+              ADD A PIECE
+            </Text>
+          </TouchableOpacity>
+
           {/* AI Citation */}
           <View style={styles.citation}>
-            <Text style={styles.citationText}>
-              "{suggestion.style_notes}"
-            </Text>
+            <Text style={styles.citationText}>"{displayNotes}"</Text>
           </View>
 
           {/* Action Button */}
@@ -203,6 +298,14 @@ export default function MatchScreen() {
           </TouchableOpacity>
         </ScrollView>
       ) : null}
+
+      <AddPieceSheet
+        visible={addPickerOpen}
+        items={items.filter((i) => !effectiveIds.includes(i.id))}
+        preferCategory={needsBaseLayer(matchedItems) ? 'tops' : null}
+        onPick={handleAddPiece}
+        onClose={() => setAddPickerOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -320,12 +423,12 @@ const makeStyles = (c: ThemeColors) =>
     scoreValue: {
       fontSize: 40,
       fontFamily: 'PlayfairDisplay_700Bold',
-      color: c.accent,
+      color: c.accentText,
     },
     scorePercent: {
       fontSize: 20,
       fontFamily: 'PlayfairDisplay_400Regular_Italic',
-      color: c.accent,
+      color: c.accentText,
       marginTop: 6,
     },
     scoreLabel: {
@@ -350,6 +453,17 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surfaceAlt,
     },
     pieceImg: { width: '100%', height: '100%' },
+    removeBtn: {
+      position: 'absolute',
+      top: 6,
+      left: 6,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(20,17,15,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     pieceInfo: {
       flex: 1,
       padding: 16,
@@ -359,13 +473,47 @@ const makeStyles = (c: ThemeColors) =>
     pieceRole: {
       fontSize: 11,
       fontWeight: '600',
-      color: c.accent,
+      color: c.accentText,
       letterSpacing: 2,
     },
     pieceName: {
       fontSize: 20,
       fontFamily: 'PlayfairDisplay_700Bold',
       color: c.foreground,
+    },
+
+    // Add a piece
+    layerHint: {
+      fontSize: 13,
+      color: c.muted,
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginTop: 4,
+    },
+    addPieceBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: c.accent,
+      backgroundColor: c.surface,
+    },
+    addPieceBtnHinted: {
+      backgroundColor: c.accent,
+      borderStyle: 'solid',
+    },
+    addPieceText: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      color: c.accentText,
+    },
+    addPieceTextHinted: {
+      color: c.onAccent,
     },
 
     // Citation
@@ -375,8 +523,10 @@ const makeStyles = (c: ThemeColors) =>
       padding: 20,
     },
     citationText: {
+      // Regular, not italic — an italic serif reads fine for a short
+      // one-line tagline but hurts legibility across a full paragraph.
       fontSize: 14,
-      fontFamily: 'PlayfairDisplay_400Regular_Italic',
+      fontFamily: 'PlayfairDisplay_400Regular',
       color: c.muted,
       lineHeight: 22,
     },
@@ -410,7 +560,7 @@ const makeStyles = (c: ThemeColors) =>
     tryAnother: { alignItems: 'center', paddingVertical: 8 },
     tryAnotherText: {
       fontSize: 14,
-      color: c.accent,
+      color: c.accentText,
       fontWeight: '500',
     },
   });

@@ -113,6 +113,26 @@ export function useSwapPiece() {
   });
 }
 
+export interface RescoreResult {
+  cohesion_score: number;
+  style_notes: string;
+}
+
+/** Re-score a look after the user manually adds/edits a piece. */
+export function useRescoreOutfit() {
+  return useMutation<
+    RescoreResult,
+    Error,
+    { item_ids: string[]; occasion: string; season?: string }
+  >({
+    mutationFn: (body) =>
+      apiRequest<RescoreResult>('/api/outfits/rescore', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
 export function useSaveOutfit() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -3,4 +3,5 @@ export {
   buildOutfitSuggestionsPrompt,
   buildOccasionOutfitPrompt,
   buildSwapPiecePrompt,
+  buildRescorePrompt,
 } from './outfitSuggestions';

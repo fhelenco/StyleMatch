@@ -10,11 +10,17 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
-import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
+// expo-media-library's SDK 57 "Next" API calls requireNativeModule at import
+// time with no web fallback, which crashes the whole app on web before it
+// can render. It's only used here for native-only save-to-Photos, so load it
+// conditionally and skip it on web instead of statically importing it.
+const MediaLibrary: typeof import('expo-media-library') | null =
+  Platform.OS === 'web' ? null : require('expo-media-library');
 import { useAuthStore } from '../../stores/authStore';
 import { useWardrobeStore } from '../../stores/wardrobeStore';
 import { useProfileStore } from '../../stores/profileStore';
@@ -58,7 +64,12 @@ export default function ProfileScreen() {
   const [cityDialogVisible, setCityDialogVisible] = useState(false);
 
   const cardRef = useRef<View>(null);
-  const [permission, requestPermission] = MediaLibrary.usePermissions({ writeOnly: true });
+  // MediaLibrary is null only on web, which never changes for the life of a
+  // running app instance, so this conditional hook call is safe in practice.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [permission, requestPermission] = MediaLibrary
+    ? MediaLibrary.usePermissions({ writeOnly: true })
+    : [null, async () => null];
 
   const resolvedName = profile?.username?.trim() || displayName(user?.email);
   const initial = resolvedName?.[0]?.toUpperCase() ?? '?';
@@ -118,12 +129,16 @@ export default function ProfileScreen() {
 
   const handleSaveCard = async () => {
     if (saving) return;
+    if (!MediaLibrary) {
+      Alert.alert('Not available on web', 'Saving to Photos only works in the mobile app.');
+      return;
+    }
     setSaving(true);
     try {
       let granted = permission?.granted ?? false;
       if (!granted) {
         const res = await requestPermission();
-        granted = res.granted;
+        granted = res?.granted ?? false;
       }
       if (!granted) {
         Alert.alert(
@@ -379,7 +394,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     avatarImage: { width: '100%', height: '100%' },
     avatarLoading: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: c.overlay,
       alignItems: 'center',
       justifyContent: 'center',

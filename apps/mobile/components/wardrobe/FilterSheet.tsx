@@ -213,7 +213,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     clear: {
       fontSize: 15,
-      color: c.accent,
+      color: c.accentText,
       fontWeight: '600',
     },
     section: {

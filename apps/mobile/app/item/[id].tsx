@@ -386,7 +386,7 @@ const makeStyles = (c: ThemeColors) =>
     container: { flex: 1, backgroundColor: c.background },
     center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
     busyOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: c.background,
       alignItems: 'center',
       justifyContent: 'center',
@@ -394,7 +394,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     busyText: { fontSize: 15, color: c.muted },
     notFound: { fontSize: 16, color: c.muted },
-    backLink: { fontSize: 14, color: c.accent, fontWeight: '600' },
+    backLink: { fontSize: 14, color: c.accentText, fontWeight: '600' },
 
     scroll: { paddingBottom: 120 },
 

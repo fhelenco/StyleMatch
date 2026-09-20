@@ -48,12 +48,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     mode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : mode;
 
   // Keep native surfaces (Alert, ActionSheet, keyboard, refresh control) in step
-  // with the in-app choice. `null` hands control back to the OS.
+  // with the in-app choice. `'unspecified'` hands control back to the OS — RN
+  // 0.86 dropped `null` from ColorSchemeName in favor of this explicit value.
   // react-native-web doesn't implement Appearance.setColorScheme, so guard it —
   // without this the whole app crashes on web before it can even render.
   useEffect(() => {
     if (typeof Appearance.setColorScheme === 'function') {
-      Appearance.setColorScheme(mode === 'system' ? null : mode);
+      Appearance.setColorScheme(mode === 'system' ? 'unspecified' : mode);
     }
   }, [mode]);
 
