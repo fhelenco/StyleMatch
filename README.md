@@ -3,9 +3,6 @@
 AI-powered wardrobe app: organize your closet digitally and get outfit
 suggestions with a written rationale and a cohesion score.
 
-*Add a short demo video or GIF here — a 15–30s clip of "upload a piece →
-generate a look → save to Lookbook" is the fastest way to show what this does.*
-
 ## What it does
 - **Wardrobe:** photograph or upload clothing pieces; Claude analyzes each
   photo to auto-tag category, color, fabric, pattern and season. Browse and
@@ -92,8 +89,11 @@ A saved look — occasion/season/trend tags, the AI's style notes, and every pie
 - **No SQL migrations in the repo yet** — the schema currently only exists
   live in Supabase. Exporting it as versioned migrations is the top item to
   fix before this is easy for someone else to clone and run.
-- **Outfit generation latency** — a single AI call typically takes a few
-  seconds; there's no progress/streaming feedback beyond a loading spinner.
+- **Outfit generation latency** — each call asks Claude for several ranked
+  outfit options at once, so it commonly takes 30–60+ seconds on Sonnet 4.6;
+  there's no progress/streaming feedback beyond a loading spinner. Worth
+  revisiting if it becomes the main complaint — e.g. streaming partial
+  results, or trimming the suggestion count.
 - **No automated tests or CI** — everything so far has been verified manually
   end-to-end (direct API calls + in-app checks).
 - **Trip packing lists** and **"complete the look" gap analysis** (AI
