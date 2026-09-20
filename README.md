@@ -24,8 +24,14 @@ generate a look → save to Lookbook" is the fastest way to show what this does.
   as a saved image.
 
 ## Screenshots
-*Add a few screenshots here — Wardrobe grid, an outfit result with its
-cohesion score, and the Lookbook are the most representative.*
+
+| | |
+|---|---|
+| ![Home](docs/screenshots/home.webp) Home | ![Wardrobe](docs/screenshots/wardrobe.webp) Wardrobe |
+| ![Filters](docs/screenshots/filters.png) Filters | ![Aesthetic DNA](docs/screenshots/aesthetic-dna.png) Aesthetic DNA |
+
+![Outfit detail](docs/screenshots/outfit-detail.webp)
+A saved look — occasion/season/trend tags, the AI's style notes, and every piece in it
 
 ## Design decisions
 - **Explain the AI's choices.** Every outfit includes a short written
