@@ -386,7 +386,7 @@ const makeStyles = (c: ThemeColors) =>
     container: { flex: 1, backgroundColor: c.background },
     center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
     busyOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: c.background,
       alignItems: 'center',
       justifyContent: 'center',

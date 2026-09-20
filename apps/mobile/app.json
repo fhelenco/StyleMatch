@@ -47,7 +47,8 @@
           "savePhotosPermission": "StyleMatch saves your Aesthetic DNA card to your Photos.",
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
